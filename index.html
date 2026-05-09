@@ -1,0 +1,2681 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Cumhuriyet — Ülke Kurma Oyunu (81 İl)</title>
+<meta name="description" content="Türkiye'yi yönet, şehirleri geliştir, orduyu komuta et."/>
+<meta name="theme-color" content="#c4954a"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Cumhuriyet"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="icon" type="image/x-icon" href="favicon.ico"/>
+<link rel="apple-touch-icon" href="apple-touch-icon.png"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0e0b07;--bg1:#171210;--bg2:#201a12;--panel:#241d14;--panel2:#2e2418;
+  --line:#3d3020;--gold:#c4954a;--gold2:#e8b96a;--golddim:#7a5e2e;
+  --ink:#e2d4b8;--ink2:#b8a882;--inkdim:#7a6e56;--inkfade:#4a4030;
+  --red:#c43a3f;--red2:#e85055;--reddim:#6a2020;
+  --green:#5a8a32;--green2:#7ab84a;
+  --blue:#3a6a9a;--blue2:#5a9aca;
+  --purple:#6a3a9a;--purple2:#9a6aca;--purpledim:#3a2060;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'Crimson Pro',serif;font-size:13px;color:var(--ink);-webkit-font-smoothing:antialiased}
+button{cursor:pointer;font-family:inherit}
+button:active{transform:scale(.97)}
+
+/* ── LAYOUT ── */
+#app{display:grid;grid-template-columns:60px 1fr 380px;grid-template-rows:56px 1fr 44px;height:100vh;width:100vw}
+#topbar{grid-column:1/4;grid-row:1;display:flex;align-items:center;background:linear-gradient(180deg,#2a2016,#181208);border-bottom:1px solid var(--line);position:relative;z-index:10}
+#topbar::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.4}
+#rail{grid-column:1;grid-row:2/4;background:linear-gradient(180deg,#181208,#0e0b07);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:6px 0;gap:1px;z-index:5}
+#stage{grid-column:2;grid-row:2;background:#0a1018;position:relative;overflow:hidden}
+#panel{grid-column:3;grid-row:2;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+#bottombar{grid-column:2/4;grid-row:3;background:linear-gradient(180deg,#181208,#0e0b07);border-top:1px solid var(--line);display:flex;align-items:center;z-index:5}
+
+/* ── TOPBAR ── */
+.crest{width:60px;height:52px;display:flex;align-items:center;justify-content:center;border-right:1px solid var(--line);flex-shrink:0}
+.crest svg{width:28px;height:28px;color:var(--gold2)}
+.country-name{padding:0 16px;border-right:1px solid var(--line);min-width:180px}
+.country-name .n{font-family:'Cinzel';font-size:13px;color:var(--gold2);font-weight:700;letter-spacing:.06em}
+.country-name .s{font-size:10px;color:var(--inkdim);letter-spacing:.14em;text-transform:uppercase;margin-top:2px}
+.topstats{flex:1;display:flex;align-items:center;height:100%;overflow:hidden}
+.ts{height:100%;padding:0 12px;display:flex;align-items:center;gap:8px;border-right:1px solid rgba(196,149,74,.12);min-width:0;cursor:default}
+.ts:hover{background:rgba(196,149,74,.05)}
+.ts-ico{width:18px;height:18px;color:var(--gold);flex-shrink:0}
+.ts-data{display:flex;flex-direction:column;line-height:1}
+.ts-val{font-family:'IBM Plex Mono';font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap}
+.ts-lbl{font-size:9px;color:var(--inkdim);letter-spacing:.14em;text-transform:uppercase;margin-top:2px;font-weight:600;font-family:'Bebas Neue'}
+.ts-d{font-size:10px;font-family:'IBM Plex Mono';margin-left:4px}
+.ts-d.pos{color:var(--green2)}.ts-d.neg{color:var(--red2)}
+.datebox{padding:0 16px;border-left:1px solid var(--line);text-align:right;min-width:150px}
+.datebox .d{font-family:'Cinzel';font-size:13px;color:var(--gold2);font-weight:600;letter-spacing:.04em}
+.datebox .s{font-size:10px;color:var(--inkdim);margin-top:2px;font-family:'IBM Plex Mono'}
+
+/* ── RAIL ── */
+.rb{width:48px;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--inkdim);border:1px solid transparent;border-radius:2px;background:transparent;transition:all .15s;position:relative}
+.rb svg{width:18px;height:18px}
+.rb span{font-size:8px;font-family:'Bebas Neue';letter-spacing:.1em;text-transform:uppercase}
+.rb:hover{color:var(--gold2);background:rgba(196,149,74,.07)}
+.rb.active{color:var(--gold2);background:rgba(196,149,74,.12);border-left:2px solid var(--gold)}
+.rb .badge{position:absolute;top:5px;right:5px;background:var(--red);color:#fff;font-size:8px;font-family:'IBM Plex Mono';font-weight:700;border-radius:8px;padding:1px 4px;min-width:14px;text-align:center}
+.rdiv{width:28px;height:1px;background:var(--line);margin:4px 0}
+
+/* ── MAP ── */
+#mapsvg{width:100%;height:100%;cursor:grab}
+#mapsvg:active{cursor:grabbing}
+.prov{transition:fill .12s,stroke .12s;cursor:pointer}
+.prov:hover{filter:brightness(1.3)}
+.maptools{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:6px;z-index:3}
+.mapbtn{background:rgba(14,11,7,.88);border:1px solid var(--line);color:var(--inkdim);padding:6px 12px;font-family:'Bebas Neue';font-size:12px;letter-spacing:.12em;transition:all .15s;backdrop-filter:blur(6px)}
+.mapbtn:hover,.mapbtn.active{color:var(--gold2);border-color:var(--golddim);background:rgba(196,149,74,.1)}
+.mapmode-row{display:flex;gap:0}
+.mapmode-row .mapbtn{border-right:0}.mapmode-row .mapbtn:last-child{border-right:1px solid var(--line)}
+.mapzoom{display:flex}
+.mapzoom .mapbtn{padding:5px 10px;border-right:0}.mapzoom .mapbtn:last-child{border-right:1px solid var(--line)}
+.maplegend{position:absolute;bottom:10px;left:10px;background:rgba(14,11,7,.88);border:1px solid var(--line);padding:10px 12px;backdrop-filter:blur(6px);z-index:3}
+.ml-title{font-family:'Bebas Neue';font-size:11px;letter-spacing:.16em;color:var(--gold2);margin-bottom:6px}
+.ml-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink2);padding:2px 0}
+.ml-sw{width:12px;height:9px;border:1px solid rgba(0,0,0,.4)}
+.prov-tip{position:fixed;z-index:20;background:rgba(14,11,7,.96);border:1px solid var(--golddim);border-top:2px solid var(--gold);padding:10px 12px;min-width:200px;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.prov-tip .pn{font-family:'Cinzel';font-size:14px;color:var(--gold2);font-weight:700}
+.prov-tip .pt{font-size:10px;color:var(--inkdim);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.prov-tip .pr{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-top:1px solid rgba(196,149,74,.1);margin-top:6px}
+.prov-tip .pr span:first-child{color:var(--inkdim)}
+.prov-tip .pr .v{font-family:'IBM Plex Mono';color:var(--ink)}
+
+/* ── RIGHT PANEL ── */
+.ph{padding:12px 16px 10px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(196,149,74,.07),transparent);flex-shrink:0}
+.ph .crumb{font-size:9px;color:var(--inkdim);letter-spacing:.16em;text-transform:uppercase;font-weight:600;font-family:'Bebas Neue';margin-bottom:3px}
+.ph h2{font-family:'Cinzel';font-size:16px;color:var(--gold2);font-weight:700;letter-spacing:.05em}
+.ph .sub{font-size:11px;color:var(--inkdim);margin-top:3px;font-style:italic}
+.pb{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:var(--golddim) transparent}
+.pb::-webkit-scrollbar{width:6px}.pb::-webkit-scrollbar-thumb{background:var(--golddim)}
+.sect{padding:12px 16px;border-bottom:1px solid rgba(196,149,74,.08)}
+.stitle{font-family:'Bebas Neue';font-size:12px;letter-spacing:.18em;color:var(--gold2);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.stitle::before{content:'';display:inline-block;width:3px;height:12px;background:var(--gold);margin-right:7px;vertical-align:-1px}
+
+/* Cards */
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);padding:10px 12px;margin-bottom:8px;position:relative}
+.card:hover{border-color:var(--golddim)}
+.card-title{font-family:'Cinzel';font-size:12px;color:var(--gold2);font-weight:600;letter-spacing:.03em;margin-bottom:6px}
+.irow{display:flex;justify-content:space-between;align-items:center;padding:3px 0;font-size:11px;border-top:1px solid rgba(196,149,74,.07)}
+.irow:first-of-type{border-top:0}
+.irow .l{color:var(--inkdim);letter-spacing:.06em}
+.irow .v{font-family:'IBM Plex Mono';color:var(--ink);font-weight:500}
+.irow .v.pos{color:var(--green2)}.irow .v.neg{color:var(--red2)}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 12px;background:linear-gradient(180deg,#3e3020,#221a10);border:1px solid var(--golddim);border-top-color:var(--gold);color:var(--gold2);font-family:'Bebas Neue';font-size:11px;letter-spacing:.14em;transition:all .15s;text-transform:uppercase}
+.btn:hover{background:linear-gradient(180deg,#4e3e28,#2e221a);border-color:var(--gold);box-shadow:0 0 10px rgba(196,149,74,.15)}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important}
+.btn.red{background:linear-gradient(180deg,#5a2020,#2a1010);border-color:var(--reddim);border-top-color:var(--red);color:#e8b8b0}
+.btn.red:hover{background:linear-gradient(180deg,#6a2828,#3a1515);box-shadow:0 0 10px rgba(196,58,63,.2)}
+.btn.green{background:linear-gradient(180deg,#2a4a18,#162810);border-color:#3a6020;border-top-color:var(--green2);color:#a8e070}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink2)}
+.btn.ghost:hover{border-color:var(--golddim);color:var(--ink)}
+.btn.sm{padding:4px 8px;font-size:10px}
+.btn-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
+
+/* Progress */
+.pbar{height:5px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--golddim),var(--gold2));transition:width .4s}
+.pbar.red i{background:linear-gradient(90deg,var(--reddim),var(--red2))}
+.pbar.green i{background:linear-gradient(90deg,#2a4a18,var(--green2))}
+.pbar.thin{height:3px}
+
+/* Stat line */
+.sl{margin-bottom:7px}
+.sl .top{display:flex;justify-content:space-between;font-size:11px;padding:1px 0}
+.sl .top .l{color:var(--inkdim)}.sl .top .v{font-family:'IBM Plex Mono';color:var(--ink)}
+
+/* Pills */
+.pill{display:inline-block;padding:1px 5px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-family:'Bebas Neue';border:1px solid var(--golddim);color:var(--gold2)}
+.pill.r{border-color:var(--red);color:var(--red2)}.pill.g{border-color:var(--green);color:var(--green2)}.pill.b{border-color:var(--blue);color:var(--blue2)}
+
+/* Subtabs */
+.stabs{display:flex;border-bottom:1px solid var(--line);background:rgba(0,0,0,.2);flex-shrink:0}
+.stab{flex:1;padding:8px 6px;font-family:'Bebas Neue';font-size:10px;letter-spacing:.14em;color:var(--inkdim);border:none;background:transparent;border-right:1px solid rgba(196,149,74,.08);transition:all .15s;text-align:center}
+.stab:last-child{border-right:0}
+.stab:hover{color:var(--ink)}
+.stab.active{color:var(--gold2);background:rgba(196,149,74,.08);border-bottom:2px solid var(--gold);margin-bottom:-1px}
+
+/* Tables */
+table.t{width:100%;border-collapse:collapse;font-size:11px}
+table.t th{text-align:left;padding:5px 6px;font-family:'Bebas Neue';font-size:10px;letter-spacing:.14em;color:var(--gold2);font-weight:400;border-bottom:1px solid var(--golddim)}
+table.t td{padding:5px 6px;border-bottom:1px solid rgba(196,149,74,.06);font-family:'IBM Plex Mono';color:var(--ink2)}
+table.t tr:hover td{background:rgba(196,149,74,.04);color:var(--ink)}
+
+/* ── BOTTOM BAR ── */
+.ticker{flex:1;height:44px;overflow:hidden;display:flex;align-items:center;border-right:1px solid var(--line)}
+.ticker-tag{background:var(--reddim);color:#fff;font-family:'Bebas Neue';font-size:12px;letter-spacing:.18em;padding:0 12px;height:100%;display:flex;align-items:center;border-right:1px solid var(--red);flex-shrink:0}
+.ticker-scroll{display:flex;gap:40px;animation:ticker 50s linear infinite;white-space:nowrap;padding:0 20px}
+@keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tick-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2)}
+.tick-tag{font-family:'Bebas Neue';font-size:9px;letter-spacing:.12em;padding:2px 5px;border:1px solid var(--golddim);color:var(--gold2)}
+.tick-tag.r{border-color:var(--red);color:var(--red2)}.tick-tag.g{border-color:var(--green);color:var(--green2)}
+.timectrl{display:flex;align-items:center;padding:0 10px;gap:0;height:44px;background:rgba(0,0,0,.3);border-left:1px solid var(--line)}
+.tbtn{width:32px;height:32px;background:transparent;border:1px solid var(--line);color:var(--inkdim);display:flex;align-items:center;justify-content:center;margin-left:-1px;transition:all .15s}
+.tbtn:hover{color:var(--gold2);border-color:var(--golddim);z-index:1}
+.tbtn.active{color:var(--gold2);background:rgba(196,149,74,.12);border-color:var(--gold);z-index:2}
+.tbtn svg{width:12px;height:12px}
+
+/* ── MODAL (events/decisions) ── */
+.modal-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);animation:fadein .2s}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+.modal{background:linear-gradient(180deg,#2a2016,#171208);border:2px solid var(--gold);padding:28px 32px;max-width:520px;width:92vw;position:relative;box-shadow:0 24px 72px rgba(0,0,0,.8),0 0 0 1px rgba(196,149,74,.2)}
+.modal .mc{position:absolute;width:14px;height:14px;border:2px solid var(--gold2)}
+.modal .tl{top:6px;left:6px;border-right:0;border-bottom:0}
+.modal .tr{top:6px;right:6px;border-left:0;border-bottom:0}
+.modal .bl{bottom:6px;left:6px;border-right:0;border-top:0}
+.modal .br{bottom:6px;right:6px;border-left:0;border-top:0}
+.modal-tag{font-family:'Bebas Neue';font-size:11px;letter-spacing:.2em;color:var(--gold2);margin-bottom:4px}
+.modal-title{font-family:'Cinzel';font-size:20px;color:var(--gold2);font-weight:700;letter-spacing:.06em;margin-bottom:12px}
+.modal-body{font-size:13px;color:var(--ink2);line-height:1.7;margin-bottom:18px}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:54px;right:390px;z-index:50;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--golddim);border-top:2px solid var(--gold);padding:12px 16px;width:320px;box-shadow:0 12px 32px rgba(0,0,0,.6);animation:slideup .3s ease-out}
+@keyframes slideup{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.toast .ev-tag{font-family:'Bebas Neue';font-size:10px;letter-spacing:.16em;color:var(--gold2);margin-bottom:3px}
+.toast .ev-title{font-family:'Cinzel';font-size:13px;color:var(--ink);font-weight:600;margin-bottom:5px}
+.toast .ev-body{font-size:11px;color:var(--ink2);line-height:1.5;margin-bottom:8px}
+
+/* ── NAME SCREEN ── */
+#namescreen{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,rgba(40,28,14,.5),rgba(0,0,0,.95));backdrop-filter:blur(8px)}
+.ns{background:linear-gradient(180deg,#2e2416,#171008);border:2px solid var(--gold);padding:40px 48px;max-width:540px;width:92vw;text-align:center;position:relative;box-shadow:0 32px 80px rgba(0,0,0,.9)}
+.ns .mc{position:absolute;width:16px;height:16px;border:2px solid var(--gold2)}
+.ns .tl{top:8px;left:8px;border-right:0;border-bottom:0}
+.ns .tr{top:8px;right:8px;border-left:0;border-bottom:0}
+.ns .bl{bottom:8px;left:8px;border-right:0;border-top:0}
+.ns .br{bottom:8px;right:8px;border-left:0;border-top:0}
+.ns-pre{font-family:'Bebas Neue';font-size:12px;letter-spacing:.3em;color:var(--inkdim);margin-bottom:4px}
+.ns-title{font-family:'Cinzel';font-size:28px;color:var(--gold2);font-weight:900;letter-spacing:.14em;margin-bottom:16px}
+.ns-rule{height:1px;background:linear-gradient(90deg,transparent,var(--golddim),transparent);margin:16px 24px}
+.ns-text{font-size:13px;color:var(--ink2);line-height:1.8;margin-bottom:20px;text-align:left}
+.ns-text em{color:var(--gold2);font-style:italic}
+.ns-label{font-family:'Bebas Neue';font-size:10px;letter-spacing:.18em;color:var(--inkdim);text-align:left;margin-bottom:6px}
+.ns-input{width:100%;background:rgba(0,0,0,.5);border:0;border-bottom:2px solid var(--gold);color:var(--gold2);font-family:'Cinzel';font-size:22px;font-weight:600;letter-spacing:.05em;padding:8px 4px;outline:none;margin-bottom:16px}
+.ns-input::placeholder{color:var(--inkfade)}
+.ns-input:focus{border-bottom-color:var(--gold2)}
+
+/* Pulse animation */
+.pulse{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.4;transform:scale(.9)}50%{opacity:1;transform:scale(1.1)}}
+
+/* ── YENİ: TOPBAR GENİŞLETME ── */
+#topbar{grid-template-rows:56px}
+.crest{height:56px}
+.btn.purple{background:linear-gradient(180deg,var(--purpledim),#120a22);border-color:#5a3a90;border-top-color:var(--purple2);color:#c8a8f0}
+.btn.purple:hover{background:linear-gradient(180deg,#4a2880,#1a0e30);box-shadow:0 0 10px rgba(154,106,202,.2)}
+.pbar.purple i{background:linear-gradient(90deg,var(--purpledim),var(--purple2))}
+.pill.p{border-color:var(--purple);color:var(--purple2)}
+
+/* Onay oranı göstergesi */
+.appr-wrap{padding:0 12px;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;flex-shrink:0;cursor:default}
+.appr-wrap:hover{background:rgba(196,149,74,.04)}
+.appr-arc-lbl{font-family:'Bebas Neue';font-size:9px;letter-spacing:.14em;color:var(--inkdim)}
+
+/* Siyasi sermaye */
+.pc-wrap{padding:0 11px;border-right:1px solid var(--line);display:flex;align-items:center;gap:7px;flex-shrink:0;cursor:default;transition:background .15s}
+.pc-wrap:hover{background:rgba(154,106,202,.07)}
+.pc-ico{width:15px;height:15px;color:var(--purple2);flex-shrink:0}
+.pc-data .pv{font-family:'IBM Plex Mono';font-size:12px;font-weight:700;color:var(--purple2)}
+.pc-data .pl{font-size:9px;color:var(--inkdim);letter-spacing:.14em;text-transform:uppercase;font-family:'Bebas Neue'}
+
+/* ── YENİ: BAKAN KARTLARI ── */
+.minister-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px}
+.min-card{background:var(--bg2);border:1px solid var(--line);padding:8px 10px;transition:border-color .15s;cursor:default}
+.min-card:hover{border-color:var(--golddim)}
+.min-role{font-size:9px;font-family:'Bebas Neue';letter-spacing:.15em;color:var(--inkdim);margin-bottom:2px}
+.min-name{font-family:'Cinzel';font-size:11px;color:var(--ink);font-weight:600;margin-bottom:4px}
+.min-eff{display:flex;align-items:center;gap:6px}
+.min-eff-bar{flex:1;height:3px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.min-eff-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--golddim),var(--gold2));transition:width .4s}
+.min-eff-num{font-family:'IBM Plex Mono';font-size:10px;color:var(--ink2);flex-shrink:0}
+
+/* ── YENİ: SOSYAL GRUPLAR ── */
+.sg-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid rgba(196,149,74,.07);font-size:11px}
+.sg-row:first-child{border-top:0}
+.sg-name{flex:0 0 115px;color:var(--inkdim);font-size:10px}
+.sg-bar-wrap{flex:1;height:5px;background:var(--bg);border:1px solid var(--line);overflow:hidden}
+.sg-bar-fill{height:100%;transition:width .5s}
+.sg-pct{width:28px;text-align:right;font-family:'IBM Plex Mono';font-size:10px;color:var(--ink2)}
+.sg-orient{font-size:9px;font-family:'Bebas Neue';letter-spacing:.1em;color:var(--inkdim);flex:0 0 80px;text-align:right}
+
+/* ── YENİ: SPARKLINE GRAFİK ── */
+.chart-wrap{background:rgba(0,0,0,.3);border:1px solid var(--line);padding:8px 10px;margin-top:6px}
+.chart-wrap svg{display:block;width:100%}
+.chart-title{font-size:9px;color:var(--inkdim);font-family:'Bebas Neue';letter-spacing:.14em;margin-bottom:5px;display:flex;justify-content:space-between}
+
+/* ── YENİ: MECLİS ── */
+.parl-bar{display:flex;height:14px;border:1px solid var(--line);overflow:hidden;margin:6px 0}
+.parl-coalition{background:#c43a3f;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:9px;letter-spacing:.1em;color:#fff;transition:flex .5s}
+.parl-oppos{background:#3a6a9a;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:9px;letter-spacing:.1em;color:#fff;transition:flex .5s}
+.bill-card{background:var(--bg2);border:1px solid var(--line);padding:10px 12px;margin-bottom:6px;transition:border-color .15s}
+.bill-card:hover{border-color:var(--golddim)}
+.bill-tag{font-family:'Bebas Neue';font-size:9px;letter-spacing:.16em;color:var(--gold2);margin-bottom:2px}
+.bill-name{font-family:'Cinzel';font-size:12px;color:var(--ink);font-weight:600;margin-bottom:4px}
+.bill-effect{font-size:10px;color:var(--inkdim);line-height:1.4;margin-bottom:6px}
+
+/* ── YENİ: KOMUTAN KARTLARI ── */
+.gen-card{background:var(--bg2);border:1px solid var(--line);padding:10px 12px;margin-bottom:6px;transition:border-color .15s}
+.gen-card:hover{border-color:var(--golddim)}
+.gen-name{font-family:'Cinzel';font-size:12px;color:var(--gold2);font-weight:600}
+.gen-rank{font-size:9px;color:var(--inkdim);font-family:'Bebas Neue';letter-spacing:.12em;margin-bottom:6px}
+.gen-stats{display:flex;gap:6px;margin-bottom:6px}
+.gen-stat{text-align:center;flex:1;background:rgba(0,0,0,.2);padding:4px 2px;border:1px solid rgba(196,149,74,.1)}
+.gen-stat .sv{font-family:'IBM Plex Mono';font-size:14px;font-weight:700;color:var(--ink)}
+.gen-stat .sl2{font-size:8px;color:var(--inkdim);font-family:'Bebas Neue';letter-spacing:.1em}
+
+/* ── YENİ: KRİZ KARTI ── */
+.crisis-card{background:linear-gradient(180deg,rgba(196,58,63,.1),rgba(196,58,63,.04));border:1px solid var(--red);border-left:3px solid var(--red2);padding:10px 12px;margin-bottom:6px}
+.crisis-card:hover{border-color:var(--red2)}
+@keyframes crisisGlow{0%,100%{box-shadow:none}50%{box-shadow:0 0 10px rgba(232,80,85,.25)}}
+.crisis-tag{font-family:'Bebas Neue';font-size:9px;letter-spacing:.16em;color:var(--red2);margin-bottom:2px}
+.crisis-title{font-family:'Cinzel';font-size:12px;color:var(--ink);font-weight:600;margin-bottom:3px}
+.crisis-body{font-size:11px;color:var(--ink2);line-height:1.5;margin-bottom:6px}
+
+/* ── YENİ: ZAFERİ/YENİLGİ ÇUBUĞU ── */
+.victory-bar{margin:0 0 6px;padding:10px 14px;background:linear-gradient(135deg,rgba(196,149,74,.07),rgba(196,149,74,.02));border:1px solid var(--golddim)}
+.vb-top{display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px}
+.vb-top .t{font-family:'Bebas Neue';letter-spacing:.14em;color:var(--gold2)}
+.vb-top .v{font-family:'IBM Plex Mono';color:var(--ink)}
+.vb-goals{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap}
+.vb-goal{font-size:9px;padding:2px 6px;border:1px solid var(--golddim);font-family:'Bebas Neue';letter-spacing:.08em}
+.vb-goal.done{border-color:var(--green);color:var(--green2);background:rgba(90,138,50,.1)}
+.vb-goal.todo{color:var(--inkdim)}
+
+/* ── YENİ: SEKTÖR GRAFİĞİ ── */
+.sector-bar{display:flex;height:18px;border:1px solid var(--line);overflow:hidden;margin:6px 0;border-radius:1px}
+.sector-seg{display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:9px;letter-spacing:.08em;transition:flex .5s;white-space:nowrap;overflow:hidden}
+
+/* ── YENİ: BÜTÇE BARI ── */
+.budget-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:11px;border-top:1px solid rgba(196,149,74,.07)}
+.budget-row:first-child{border-top:0}
+.budget-label{flex:0 0 120px;color:var(--inkdim);font-size:10px}
+.budget-bar-wrap{flex:1;height:6px;background:var(--bg);border:1px solid var(--line);overflow:hidden;cursor:pointer}
+.budget-bar-fill{height:100%;background:linear-gradient(90deg,var(--golddim),var(--gold2));transition:width .4s}
+.budget-pct{font-family:'IBM Plex Mono';font-size:10px;color:var(--ink);flex:0 0 32px;text-align:right}
+</style>
+</head>
+<body>
+
+<!-- NAME SCREEN -->
+<div id="namescreen">
+  <div class="ns">
+    <div class="mc tl"></div><div class="mc tr"></div><div class="mc bl"></div><div class="mc br"></div>
+    <div id="ns-inner">
+      <div class="ns-pre">CUMHURİYET-İ ANADOLU</div>
+      <div class="ns-title">GÖREV YEMİNİ</div>
+      <div class="ns-rule"></div>
+      <div class="ns-text" id="ns-step1">
+        Anadolu'nun kalbinde, Kırşehir vilayetinde toplanan halk meclisi bağımsızlığını ilan etti.
+        Çevrenizdeki Anadolu Federasyonu, topraklarınıza göz dikmiş bir dev.
+        Ordunuz zayıf, hazineniz sınırlı — ama iradeniz demir gibi.<br/><br/>
+        Bu görevi kabul ediyor musunuz, <em>Cumhurbaşkanı</em>?
+      </div>
+      <div class="btn-row" style="justify-content:flex-end">
+        <button class="btn red" onclick="nsStep2()">Görevi Kabul Et</button>
+      </div>
+    </div>
+    <div id="ns-inner2" style="display:none">
+      <div class="ns-pre">CUMHURİYET-İ ANADOLU — KAYIT</div>
+      <div class="ns-title">KİMLİĞİNİZ</div>
+      <div class="ns-rule"></div>
+      <div class="ns-label">CUMHURBAŞKANI — AD SOYAD</div>
+      <input class="ns-input" id="presname" placeholder="Örn. Selim Demirhan" maxlength="36" autofocus/>
+      <div class="btn-row" style="justify-content:flex-end">
+        <button class="btn ghost sm" onclick="nsBack()">Geri</button>
+        <button class="btn red" onclick="nsStart()">Cumhuriyeti Kur</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="crest">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3">
+      <path d="M12 2L20 5V12C20 17 16 20.5 12 22C8 20.5 4 17 4 12V5Z"/>
+      <path d="M12 7V17M8 12H16" stroke-width="1"/>
+      <circle cx="12" cy="12" r="2.5"/>
+    </svg>
+  </div>
+  <div class="country-name">
+    <div class="n" id="tb-name">CUMHURİYET-İ ANADOLU</div>
+    <div class="s" id="tb-leader">Cumhurbaşkanı</div>
+  </div>
+  <!-- Onay Oranı Göstergesi -->
+  <div class="appr-wrap" title="Halk Onay Oranı — Seçmenlerinizin sizi ne kadar desteklediğini gösterir">
+    <div style="position:relative;width:54px;height:30px">
+      <svg viewBox="0 0 54 30" style="width:54px;height:30px;overflow:visible">
+        <path d="M5,28 A22,22,0,0,1,49,28" fill="none" stroke="rgba(196,149,74,.12)" stroke-width="5" stroke-linecap="round"/>
+        <path id="appr-arc" d="M5,28 A22,22,0,0,1,49,28" fill="none" stroke="#7ab84a" stroke-width="5" stroke-linecap="round" stroke-dasharray="69.1" stroke-dashoffset="20.7" style="transition:stroke-dashoffset .8s,stroke .6s"/>
+      </svg>
+      <div id="appr-pct" style="position:absolute;bottom:0;left:0;right:0;text-align:center;font-family:'IBM Plex Mono';font-size:12px;font-weight:700;color:#7ab84a">68%</div>
+    </div>
+    <div class="appr-arc-lbl">ONAY</div>
+  </div>
+  <!-- Siyasi Sermaye -->
+  <div class="pc-wrap" title="Siyasi Sermaye — Yasa geçirmek ve büyük kararlar almak için gerekir">
+    <svg class="pc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polygon points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"/></svg>
+    <div class="pc-data">
+      <div class="pv" id="tb-pc">45</div>
+      <div class="pl">Siyasi</div>
+    </div>
+  </div>
+  <div class="topstats" id="topstats"><!-- filled by JS --></div>
+  <div class="datebox">
+    <div class="d" id="tb-date">8 Mayıs 2026</div>
+    <div class="s" id="tb-speed">Hız: 1x</div>
+  </div>
+</div>
+
+<!-- LEFT RAIL -->
+<div id="rail">
+  <button class="rb active" data-tab="hq" onclick="setTab('hq')" title="Komuta Merkezi [H]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6L9 4L15 6L21 4V18L15 20L9 18L3 20Z"/><path d="M9 4V18M15 6V20"/></svg>
+    <span>Komuta</span>
+  </button>
+  <button class="rb" data-tab="army" onclick="setTab('army')" title="Ordu & Savunma [A]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 4L20 4L20 10L9 21L3 21L3 15Z"/><path d="M9 15L9 21M3 15L9 15M14 4L14 10L20 10"/></svg>
+    <span>Ordu</span>
+  </button>
+  <div class="rdiv"></div>
+  <button class="rb" data-tab="industry" onclick="setTab('industry')" title="Sanayi & Üretim [I]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 21V11L9 15V11L15 15V8L21 11V21Z"/><path d="M7 21V18M11 21V18M15 21V18M19 21V18"/></svg>
+    <span>Sanayi</span>
+  </button>
+  <button class="rb" data-tab="agri" onclick="setTab('agri')" title="Tarım & Kaynaklar [G]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 22V4" stroke-linecap="round"/><path d="M12 8L8 5M12 8L16 5" stroke-linecap="round"/><path d="M12 13L7 10M12 13L17 10" stroke-linecap="round"/><path d="M12 18L7 15M12 18L17 15" stroke-linecap="round"/></svg>
+    <span>Tarım</span>
+  </button>
+  <button class="rb" data-tab="econ" onclick="setTab('econ')" title="Maliye & Ekonomi [E]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="6" width="18" height="12"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9V15M18 9V15"/></svg>
+    <span>Maliye</span>
+  </button>
+  <div class="rdiv"></div>
+  <button class="rb" data-tab="diplo" onclick="setTab('diplo')" title="Dışişleri & Diplomasi [D]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 11L7 8L11 11L13 11L17 8L21 11V14L15 17L9 17L3 14Z"/></svg>
+    <span>Dışişl.</span>
+  </button>
+  <button class="rb" data-tab="research" onclick="setTab('research')" title="Bilim & Araştırma [R]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="2"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></svg>
+    <span>Bilim</span>
+  </button>
+  <button class="rb" data-tab="interior" onclick="setTab('interior')" title="İçişleri & Sosyal [C]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="7" r="3"/><circle cx="6" cy="9" r="2.2"/><circle cx="18" cy="9" r="2.2"/><path d="M3 19C3 15 4.5 13 6 13M21 19C21 15 19.5 13 18 13M6 21C6 16 9 14 12 14C15 14 18 16 18 21"/></svg>
+    <span>İçişl.</span>
+  </button>
+  <button class="rb" data-tab="parliament" onclick="setTab('parliament')" title="Meclis & Yasama [P]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 21H21M5 21V9L12 3L19 9V21"/><path d="M9 21V15H15V21"/><rect x="10" y="10" width="4" height="4"/></svg>
+    <span>Meclis</span>
+  </button>
+  <button class="rb" data-tab="events" onclick="setTab('events')" id="events-btn" title="Haberler & Olaylar [N]">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 4H17V20H3ZM17 8H21V20H17"/><path d="M6 8H14M6 12H14M6 16H14"/></svg>
+    <span>Haberler</span>
+    <div class="badge" id="events-badge" style="display:none">0</div>
+  </button>
+</div>
+
+<!-- STAGE (MAP) -->
+<div id="stage">
+  <svg id="mapsvg" viewBox="1100 230 280 200" preserveAspectRatio="xMidYMid slice"></svg>
+  <div class="maptools">
+    <div class="mapmode-row">
+      <button class="mapbtn active" id="mm-political" onclick="setMapMode('political')">Siyasi</button>
+      <button class="mapbtn" id="mm-fronts" onclick="setMapMode('fronts')">Cephe</button>
+      <button class="mapbtn" id="mm-econ" onclick="setMapMode('econ')">Ekonomi</button>
+    </div>
+    <div class="mapzoom">
+      <button class="mapbtn" onclick="mapZoom(.7)">＋</button>
+      <button class="mapbtn" onclick="mapZoom(1.4)">−</button>
+      <button class="mapbtn" onclick="mapReset()">⌖ TÜRKİYE</button>
+      <button class="mapbtn" onclick="mapWorld()">◯ DÜNYA</button>
+    </div>
+  </div>
+  <div class="maplegend">
+    <div class="ml-title">Harita Göstergesi</div>
+    <div id="maplegend-content">
+      <div class="ml-row"><div class="ml-sw" style="background:#c43a3f"></div> Kendi toprağı</div>
+      <div class="ml-row"><div class="ml-sw" style="background:#7a5d2e;border-style:dashed;border-color:#c4954a"></div> Talep edilen</div>
+      <div class="ml-row"><div class="ml-sw" style="background:#5a4055"></div> Düşman devlet</div>
+      <div class="ml-row"><div class="ml-sw" style="background:#3a6a9a"></div> Müttefik</div>
+    </div>
+  </div>
+  <div id="prov-tip" class="prov-tip" style="display:none"></div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div id="panel">
+  <div id="panel-header"></div>
+  <div id="panel-tabs" class="stabs" style="display:none"></div>
+  <div id="panel-body" class="pb"></div>
+</div>
+
+<!-- BOTTOM BAR -->
+<div id="bottombar">
+  <div class="ticker">
+    <div class="ticker-tag">CANLI</div>
+    <div id="ticker-inner" class="ticker-scroll"></div>
+  </div>
+  <div class="timectrl">
+    <button class="tbtn active" id="spd-0" onclick="setSpeed(0)" title="Duraklat [0 veya Boşluk]">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4H10V20H6ZM14 4H18V20H14Z"/></svg>
+    </button>
+    <button class="tbtn" id="spd-1" onclick="setSpeed(1)" title="1x Hız [1]">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 4V20L20 12Z"/></svg>
+    </button>
+    <button class="tbtn" id="spd-2" onclick="setSpeed(2)" title="2x Hız [2]">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 4V20L13 12ZM13 4V20L23 12Z"/></svg>
+    </button>
+    <button class="tbtn" id="spd-3" onclick="setSpeed(3)" title="3x Hız [3]">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 4V20L10 12ZM10 4V20L18 12ZM18 4V20L24 12Z"/></svg>
+    </button>
+    <button class="tbtn" onclick="if(G)showShortcutsHelp()" title="Klavye Kısayolları [?]" style="margin-left:4px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 9C9 7.3 10.3 6 12 6C13.7 6 15 7.3 15 9C15 10.7 13 11.5 12 13" stroke-linecap="round"/><circle cx="12" cy="17" r=".6" fill="currentColor"/></svg>
+    </button>
+  </div>
+</div>
+
+</div><!-- #app -->
+
+<!-- MODAL -->
+<div id="modal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="mc tl"></div><div class="mc tr"></div><div class="mc bl"></div><div class="mc br"></div>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="display:none"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// GAME ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+const TR_MONTHS = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+function fmtDate(d){ return `${d.getDate()} ${TR_MONTHS[d.getMonth()]} ${d.getFullYear()}`; }
+function fmtNum(n){
+  if(n>=1e9) return (n/1e9).toFixed(2)+'Mr';
+  if(n>=1e6) return (n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return (n/1e3).toFixed(1)+'K';
+  return Math.round(n).toLocaleString('tr-TR');
+}
+function fmtMoney(n){ return '₺'+fmtNum(n); }
+function fmtD(n){ return (n>=0?'+':'')+fmtNum(n); }
+function clamp(v,min,max){ return Math.min(max,Math.max(min,v)); }
+
+// ── INITIAL GAME STATE ──
+function makeInitialState(presidentName){
+  return {
+    president: presidentName,
+    date: new Date(2026,4,8),
+    speed: 0,
+    tickInterval: null,
+
+    country: { name: 'CUMHURİYET-İ ANADOLU', capital: 'Ankara' },
+
+    res: {
+      treasury: 142_500_000, treasuryD: 2_400_000,
+      manpower: 24_000,      manpowerD: 320,
+      food: 18_500,          foodD: 130,
+      oil: 4_200,            oilD: -180,
+      steel: 7_800,          steelD: 120,
+    },
+    population: 3_240_000,   populationD: 1_240,
+    happiness: 64,
+    stability: 47,
+    warSupport: 38,
+    approval: 68,
+    legitimacy: 72,
+    politicalCapital: 45,
+    politicalCapitalD: 3,
+
+    history: {
+      treasury: [128,132,135,138,140,142],
+      approval:  [71, 70, 69, 68, 68, 68],
+    },
+
+    ownedProvs: ['ank','kir','kse'],
+    claimedProvs: ['kon','nev','cor','yoz','aks','krm','nig'],
+
+    army: {
+      totalSoldiers: 18_400, reserves: 6_200, morale: 72,
+      divisions: [
+        {id:'d1',name:'1. Piyade Tümeni',kind:'Piyade',size:9000,eq:86,exp:'Tecrübeli',loc:'Ankara',status:'Hazır',frontline:false,training:0,general:'g1'},
+        {id:'d2',name:'2. Mekanize Tümeni',kind:'Mekanize',size:5400,eq:64,exp:'Acemi',loc:'Kırşehir',status:'Eğitimde',frontline:false,training:14,general:null},
+        {id:'d3',name:'3. Piyade Alayı',kind:'Piyade',size:2800,eq:92,exp:'Tecrübeli',loc:'Konya Cephesi',status:'Cephede',frontline:true,training:0,general:'g2'},
+        {id:'d4',name:'1. Hava Filosu',kind:'Hava',size:1200,eq:78,exp:'Orta',loc:'Mürted',status:'Devriyede',frontline:false,training:0,general:null},
+      ],
+      trainingQueue: [
+        {id:'q1',name:'4. Piyade Tümeni',size:8000,daysLeft:18,total:30,cost:2_100_000},
+        {id:'q2',name:'2. Topçu Alayı',size:1800,daysLeft:6,total:14,cost:800_000},
+      ],
+    },
+
+    generals: [
+      {id:'g1',name:'Tümgeneral Ali Erdem',rank:'Tümgeneral',attack:7,defense:8,logistics:6,assigned:'d1',trait:'Savunma Ustası',battles:3},
+      {id:'g2',name:'Albay Kemal Yılmaz',rank:'Albay',attack:8,defense:6,logistics:7,assigned:'d3',trait:'Hızlı Taarruz',battles:5},
+      {id:'g3',name:'Tuğgeneral Mete Çelik',rank:'Tuğgeneral',attack:6,defense:7,logistics:9,assigned:null,trait:'Lojistik Dehası',battles:1},
+    ],
+
+    ministers: [
+      {id:'m1',role:'Savunma Bakanı',name:'Fuat Demir',eff:82,trait:'Militarist'},
+      {id:'m2',role:'Maliye Bakanı',name:'Selin Akar',eff:76,trait:'Ekonomist'},
+      {id:'m3',role:'Dışişleri Bakanı',name:'Orhan Şahin',eff:71,trait:'Diplomat'},
+      {id:'m4',role:'İçişleri Bakanı',name:'Haluk Çetin',eff:68,trait:'Düzenleyici'},
+      {id:'m5',role:'Sanayi Bakanı',name:'Zeynep Kurt',eff:79,trait:'Üretimci'},
+      {id:'m6',role:'Tarım Bakanı',name:'İbrahim Koç',eff:74,trait:'Çiftçi Dostu'},
+    ],
+
+    socialGroups: [
+      {name:'Asker & Veteran', size:.08, satisfaction:72, orientation:'Milliyetçi'},
+      {name:'Köylüler',        size:.28, satisfaction:58, orientation:'Muhafazakâr'},
+      {name:'İşçi Sınıfı',    size:.35, satisfaction:54, orientation:'Laik'},
+      {name:'Tüccar & Esnaf', size:.18, satisfaction:66, orientation:'Liberal'},
+      {name:'Aydın & Memur',  size:.08, satisfaction:70, orientation:'Laik'},
+      {name:'Ordu Kurumu',    size:.03, satisfaction:76, orientation:'Milliyetçi'},
+    ],
+
+    crises: [],
+
+    parliament: {
+      coalition: 68, opposition: 52, total: 120,
+      bills: [
+        {id:'b1',name:'Savunma Sanayi Kanunu',cost:18,effect:'Askeri fabrika kapasitesi +3',pcEffect:'milFact',status:'beklemede',tag:'SAVUNMA'},
+        {id:'b2',name:'Serbest Ticaret Reformu',cost:14,effect:'Ticaret geliri +₺300K/gün',pcEffect:'trade',status:'beklemede',tag:'EKONOMİ'},
+        {id:'b3',name:'Milli Eğitim Reformu',cost:22,effect:'Okur-yazar +5, araştırma +3/ay',pcEffect:'education',status:'beklemede',tag:'SOSYAL'},
+        {id:'b4',name:'Tarım Sübvansiyonu',cost:10,effect:'Gıda üretimi +200t/gün',pcEffect:'food',status:'beklemede',tag:'TARIM'},
+        {id:'b5',name:'Kamu Güvenliği Paketi',cost:16,effect:'İstikrar +6, mutluluk -2',pcEffect:'security',status:'beklemede',tag:'GÜVENLİK'},
+      ],
+    },
+
+    equipment: {
+      rifles:   {stock:22400,demand:18400,prodD:180},
+      artillery:{stock:240,  demand:320,  prodD:12},
+      tanks:    {stock:84,   demand:140,  prodD:3},
+      aircraft: {stock:36,   demand:80,   prodD:1},
+      ammo:     {stock:8400, demand:12000,prodD:220},
+    },
+
+    industry: {
+      milFact:9, civFact:6, refineries:2, powerPlants:4,
+      buildQueue:[
+        {what:'Askeri Fabrika',loc:'Eskişehir',progress:42,daysLeft:80,total:140,kind:'askeri',cost:8_500_000},
+        {what:'Sivil Fabrika',loc:'Ankara',progress:71,daysLeft:26,total:90,kind:'sivil',cost:6_200_000},
+      ],
+      prodLines:[
+        {id:'p1',model:'TZ-7 Tüfeği',factory:'Kırıkkale-1',progress:78,daysLeft:2,perDay:60},
+        {id:'p2',model:'Boran TR-3 Tank',factory:'Sakarya-2',progress:32,daysLeft:14,perDay:0.4},
+        {id:'p3',model:'Şahin F-12 Uçak',factory:'Mürted-1',progress:18,daysLeft:22,perDay:0.2},
+        {id:'p4',model:'Bora 155mm Obüs',factory:'Kayseri-1',progress:64,daysLeft:5,perDay:1.4},
+        {id:'p5',model:'Mühimmat',factory:'Ankara-3',progress:88,daysLeft:1,perDay:220},
+      ],
+    },
+
+    agriculture: {
+      farmland:240_000, yieldPerHa:4.2, livestock:1_800_000, water:78,
+      crops:[
+        {name:'Buğday',area:92000,prod:386000,status:'Hasat'},
+        {name:'Arpa',area:38000,prod:142000,status:'Ekim'},
+        {name:'Mısır',area:22000,prod:154000,status:'Büyüme'},
+        {name:'Ayçiçek',area:41000,prod:82000,status:'Büyüme'},
+      ],
+    },
+
+    diplo: {
+      relations:[
+        {code:'af', name:'Anadolu Federasyonu', color:'#5a4f38', status:'Düşman',  rel:-78, mil:'Çok Güçlü', note:'Ana tehdit'},
+        {code:'grc',name:'Yunanistan',           color:'#4d7aa8', status:'Gergin',  rel:-34, mil:'Orta',      note:'Ege gerilimi'},
+        {code:'syr',name:'Suriye Konfed.',        color:'#5a8a32', status:'Tarafsız',rel:+5,  mil:'Zayıf',     note:'Sınır ticareti'},
+        {code:'irn',name:'İran',                  color:'#3a5a26', status:'Soğuk',  rel:-22, mil:'Güçlü',     note:'Gözlem altında'},
+        {code:'aze',name:'Azerbaycan',             color:'#c43a3f', status:'Müttefik',rel:+82,mil:'Orta',      note:'Stratejik ortak'},
+        {code:'deu',name:'Almanya',                color:'#8b6f3e', status:'Tarafsız',rel:+18,mil:'Güçlü',     note:'Ticaret anlaşması'},
+        {code:'usa',name:'ABD',                    color:'#4d7aa8', status:'Tarafsız',rel:+12,mil:'Çok Güçlü',note:'NATO görüşmeleri'},
+      ],
+      treaties:[
+        {name:'Karadeniz Güvenlik Paktı',with:'Azerbaycan',kind:'İttifak',expires:'31.12.2031'},
+        {name:'Hububat Ticaret Anlaşması',with:'Almanya',kind:'Ticaret',expires:'12.06.2027'},
+      ],
+    },
+
+    economy:{
+      gdp:18_400_000_000, growth:3.4, inflation:8.2, debt:4_200_000_000, debtCap:28_000_000_000,
+      taxRate:24, unemployment:9.2, tradeBalance:-1_200_000,
+      exports:3_400_000, imports:4_600_000,
+      sectors:{ agriculture:22, industry:38, services:40 },
+      income:[
+        {name:'Vergiler',     amount:4_200_000},
+        {name:'Sanayi',       amount:2_800_000},
+        {name:'Tarım İhracatı',amount:1_400_000},
+        {name:'Ticaret',      amount:940_000},
+      ],
+      spending:[
+        {name:'Ordu & Savunma', amount:3_800_000},
+        {name:'Sanayi Yatırımı',amount:1_900_000},
+        {name:'Sosyal Hizmetler',amount:1_240_000},
+        {name:'İdari Giderler', amount:720_000},
+        {name:'Borç Faizi',     amount:380_000},
+      ],
+    },
+
+    research:{
+      points:18, pointsD:18,
+      active:[
+        {id:'r1',name:'Yarı-Otomatik Tüfek',field:'Kara',progress:64,daysLeft:32,bonus:'+%15 tüfek üretimi'},
+        {id:'r2',name:'Radyo Komuta',        field:'Genel',progress:28,daysLeft:78,bonus:'+%8 ordu moral'},
+        {id:'r3',name:'Tarım Mekanizasyonu', field:'Sivil',progress:81,daysLeft:14,bonus:'+%20 gıda üretimi'},
+      ],
+      available:[
+        {id:'a1',name:'Orta Tank',field:'Kara',cost:240,days:60,bonus:'+%25 tank savaş gücü'},
+        {id:'a2',name:'Şifreleme',field:'Genel',cost:180,days:45,bonus:'+%30 istihbarat'},
+        {id:'a3',name:'Endüstriyel Tarım',field:'Sivil',cost:120,days:30,bonus:'+%35 tarım verimi'},
+      ],
+      completed:[],
+    },
+
+    interior:{
+      literacy:86, healthcare:62, infrastructure:54, employment:91,
+      laws:[
+        {name:'Zorunlu Askerlik',active:true, effect:'+250/gün insan gücü',toggle:'manpower'},
+        {name:'Genişletilmiş Eğitim',active:true,effect:'+0.4 araştırma/ay, +1 onay',toggle:'research'},
+        {name:'Yiyecek Karnesi',active:false,effect:'+%12 gıda, -2 mutluluk',toggle:'food'},
+        {name:'Sıkıyönetim',active:false,effect:'+8 istikrar, -%20 ekonomi, -5 onay',toggle:'martial'},
+        {name:'Basın Özgürlüğü',active:true,effect:'+2 onay/ay, +2 meşruiyet',toggle:'press'},
+        {name:'Sanayii Teşviki',active:false,effect:'+%15 üretim, -₺300K/gün',toggle:'industry'},
+        {name:'Göç Teşviki',active:false,effect:'+600 nüfus/gün, -₺200K/gün',toggle:'migration'},
+      ],
+    },
+
+    events:[
+      {id:'e1',tag:'KRİZ',kind:'r',title:'A. Federasyonu sınıra asker yığıyor',body:'4 piyade tümeni Eskişehir-Konya hattında tespit edildi. Genelkurmay tahkimat öneriyor.',read:false,date:'Bugün'},
+      {id:'e2',tag:'EKONOMİ',kind:'g',title:'Hububat ihracat anlaşması imzalandı',body:'Almanya ile 14 aylık tahıl ticareti. Günlük gelir artışı bekleniyor.',read:false,date:'Bugün'},
+      {id:'e3',tag:'ARAŞTIRMA',kind:'',title:'Tüfek prototipi test edildi',body:'TZ-7 modeli %64 ilerlemede. Ekipler başarıdan memnun.',read:true,date:'Dün'},
+      {id:'e4',tag:'İSTİHBARAT',kind:'r',title:'Casus ağında ajan kaybedildi',body:'A. Federasyonu içinde operasyon riske girdi. Yedek ajan devreye alındı.',read:true,date:'Dün'},
+    ],
+
+    decisions:[
+      {id:'dec1',tag:'SAVUNMA',title:'Sınır Hattını Tahkim Et',body:'Anadolu Federasyonu sınıra 4 tümen yığdı. Eskişehir hattına savunma siperler inşa edilebilir.',cost:8_400_000,choices:[
+        {label:'Tahkim Et — ₺8.4M',action:'fortify',style:'red'},
+        {label:'Diplomatik Kanal',action:'diplomacy',style:''},
+        {label:'Bekle ve İzle',action:'wait',style:'ghost'},
+      ]},
+    ],
+    pendingDecision: 'dec1',
+
+    mapMode:'political',
+    activeTab:'hq',
+    activeSubTab:{},
+    selectedProv: null,
+    viewBox:{x:1100,y:230,w:280,h:200},
+  };
+}
+
+let G = null; // global game state
+
+// ── NAME SCREEN ──
+function nsStep2(){
+  document.getElementById('ns-inner').style.display='none';
+  document.getElementById('ns-inner2').style.display='';
+  setTimeout(()=>document.getElementById('presname').focus(),50);
+}
+function nsBack(){
+  document.getElementById('ns-inner2').style.display='none';
+  document.getElementById('ns-inner').style.display='';
+}
+function nsStart(){
+  const name = document.getElementById('presname').value.trim();
+  if(name.length<2){ document.getElementById('presname').style.borderBottomColor='var(--red)'; return; }
+  document.getElementById('namescreen').style.display='none';
+  document.getElementById('app').style.display='';
+  G = makeInitialState(name);
+  document.getElementById('tb-leader').textContent = 'Cumhurbaşkanı '+name;
+  initMap();
+  renderAll();
+  setTimeout(()=>showDecisionModal('dec1'),1200);
+}
+document.getElementById('presname').addEventListener('keydown',e=>{ if(e.key==='Enter') nsStart(); });
+
+// ═══════════════════════════════════════════════════════════════
+// MAP
+// ═══════════════════════════════════════════════════════════════
+
+const geoX = lon => (lon+180)*5;
+const geoY = lat => (90-lat)*5;
+function pts(coords){ return coords.map(c=>geoX(c[0]).toFixed(1)+','+geoY(c[1]).toFixed(1)).join(' '); }
+function pathD(coords){ return 'M'+coords.map(c=>geoX(c[0]).toFixed(1)+' '+geoY(c[1]).toFixed(1)).join('L')+'Z'; }
+
+// Province data: [id, name, lon, lat, basekind, pop_k, ind, sz]
+const PROV_DATA = [
+  ['ank','Ankara',32.85,39.93,'capital',5750,8,1.00],
+  ['kir','Kırıkkale',33.51,39.84,'owned',280,2,.46],
+  ['kse','Kırşehir',34.16,39.15,'owned',243,1,.50],
+  ['ist','İstanbul',28.97,41.01,'enemy',15800,18,.56],
+  ['tek','Tekirdağ',27.51,40.98,'enemy',1140,5,.50],
+  ['edr','Edirne',26.56,41.68,'enemy',414,2,.50],
+  ['krk','Kırklareli',27.22,41.73,'enemy',370,2,.50],
+  ['koc','Kocaeli',29.92,40.77,'enemy',2100,9,.48],
+  ['sak','Sakarya',30.40,40.78,'enemy',1080,4,.50],
+  ['yal','Yalova',29.28,40.65,'enemy',300,2,.38],
+  ['brs','Bursa',29.07,40.18,'enemy',3200,7,.64],
+  ['blk','Balıkesir',27.89,39.65,'enemy',1260,3,.72],
+  ['can','Çanakkale',26.41,40.15,'enemy',560,2,.66],
+  ['izm','İzmir',27.14,38.42,'enemy',4400,9,.64],
+  ['ayd','Aydın',27.84,37.85,'enemy',1150,3,.56],
+  ['mug','Muğla',28.36,37.22,'enemy',1060,2,.70],
+  ['man','Manisa',27.43,38.62,'enemy',1480,4,.58],
+  ['den','Denizli',29.09,37.78,'enemy',1060,3,.56],
+  ['usa','Uşak',29.41,38.68,'enemy',380,2,.46],
+  ['kut','Kütahya',29.98,39.42,'enemy',580,2,.56],
+  ['afn','Afyonkarahisar',30.54,38.76,'enemy',750,2,.62],
+  ['ek','Eskişehir',30.52,39.78,'enemy',887,4,.62],
+  ['bil','Bilecik',29.98,40.15,'enemy',230,1,.42],
+  ['bur','Burdur',30.29,37.72,'enemy',275,1,.48],
+  ['isp','Isparta',30.55,37.76,'enemy',450,1,.50],
+  ['ant','Antalya',30.71,36.90,'enemy',2620,4,.78],
+  ['kon','Konya',32.49,37.87,'claim',2280,5,.90],
+  ['krm','Karaman',33.21,37.18,'claim',253,1,.48],
+  ['aks','Aksaray',34.04,38.37,'claim',433,1,.52],
+  ['nig','Niğde',34.68,37.97,'claim',365,1,.50],
+  ['nev','Nevşehir',34.71,38.62,'claim',310,1,.48],
+  ['yoz','Yozgat',34.81,39.82,'claim',420,1,.62],
+  ['cor','Çorum',34.95,40.55,'claim',526,1,.60],
+  ['ks','Kayseri',35.49,38.73,'enemy',1440,4,.66],
+  ['krk2','Karabük',32.63,41.20,'enemy',250,2,.42],
+  ['bol','Bolu',31.61,40.74,'enemy',325,1,.52],
+  ['duz','Düzce',31.16,40.84,'enemy',410,2,.40],
+  ['zon','Zonguldak',31.79,41.45,'enemy',600,3,.52],
+  ['bar','Bartın',32.34,41.63,'enemy',205,1,.40],
+  ['kas','Kastamonu',33.78,41.38,'enemy',390,1,.70],
+  ['cin','Çankırı',33.62,40.60,'enemy',195,1,.50],
+  ['sin','Sinop',35.16,42.03,'enemy',220,1,.48],
+  ['ams','Amasya',35.83,40.65,'enemy',340,1,.50],
+  ['tok','Tokat',36.55,40.32,'enemy',600,1,.62],
+  ['sms','Samsun',36.33,41.29,'enemy',1370,3,.66],
+  ['ord','Ordu',37.88,40.98,'enemy',760,1,.54],
+  ['gir','Giresun',38.39,40.91,'enemy',450,1,.50],
+  ['trb','Trabzon',39.72,41.00,'enemy',819,2,.54],
+  ['gum','Gümüşhane',39.48,40.46,'enemy',150,1,.42],
+  ['bay','Bayburt',40.25,40.26,'enemy',85,1,.38],
+  ['riz','Rize',40.52,41.02,'enemy',350,1,.44],
+  ['art','Artvin',41.82,41.18,'enemy',170,1,.50],
+  ['sva','Sivas',37.02,39.75,'enemy',646,2,.80],
+  ['mlt','Malatya',38.36,38.36,'enemy',810,3,.62],
+  ['ela','Elazığ',39.22,38.68,'enemy',600,2,.54],
+  ['erz','Erzurum',41.27,39.91,'enemy',762,1,.82],
+  ['erz2','Erzincan',39.75,39.75,'enemy',240,1,.54],
+  ['tun','Tunceli',39.55,39.11,'enemy',85,1,.42],
+  ['bin','Bingöl',40.50,38.88,'enemy',285,1,.50],
+  ['mus','Muş',41.50,38.73,'enemy',410,1,.52],
+  ['bit','Bitlis',42.11,38.40,'enemy',350,1,.48],
+  ['van','Van',43.38,38.50,'enemy',1130,2,.72],
+  ['agr','Ağrı',43.05,39.72,'enemy',535,1,.60],
+  ['igd','Iğdır',44.04,39.92,'enemy',205,1,.40],
+  ['kar','Kars',43.10,40.60,'enemy',290,1,.56],
+  ['ard','Ardahan',42.70,41.11,'enemy',95,1,.42],
+  ['hak','Hakkâri',43.74,37.57,'enemy',280,1,.52],
+  ['ada','Adana',35.32,37.00,'enemy',2280,6,.66],
+  ['mer','Mersin',34.63,36.81,'enemy',1900,5,.64],
+  ['osm','Osmaniye',36.25,37.07,'enemy',560,2,.44],
+  ['hat','Hatay',36.20,36.20,'enemy',1680,4,.52],
+  ['mar','Kahramanmaraş',36.93,37.58,'enemy',1180,3,.64],
+  ['adi','Adıyaman',38.28,37.76,'enemy',635,1,.52],
+  ['gtp','Gaziantep',37.38,37.07,'enemy',2150,5,.58],
+  ['kil','Kilis',37.12,36.72,'enemy',150,1,.36],
+  ['sur','Şanlıurfa',38.79,37.17,'enemy',2170,3,.78],
+  ['mar2','Mardin',40.74,37.32,'enemy',890,2,.58],
+  ['dyb','Diyarbakır',40.24,37.91,'enemy',1790,3,.70],
+  ['bat','Batman',41.13,37.88,'enemy',650,2,.44],
+  ['sir','Şırnak',42.46,37.52,'enemy',570,1,.50],
+  ['sir2','Siirt',41.94,37.93,'enemy',340,1,.44]
+];
+
+function makePolyD(lon,lat,sz){
+  const r=0.44*sz, seed=(lon*13.7+lat*31.1)|0;
+  const rnd=i=>{ const x=Math.sin(seed*9301+i*49297)*233280; return x-Math.floor(x); };
+  const pts=[]; const sides=7;
+  for(let i=0;i<sides;i++){
+    const a=(i/sides)*Math.PI*2+rnd(i*3)*.25;
+    const ri=r*(0.85+rnd(i*5+1)*.3);
+    pts.push([lon+Math.cos(a)*ri*1.15, lat+Math.sin(a)*ri*.85]);
+  }
+  return pathD(pts);
+}
+
+const PROVINCES = PROV_DATA.map(([id,name,lon,lat,bk,popK,ind,sz])=>({
+  id,name,lon,lat,baseKind:bk,pop:popK*1000,ind,
+  d: makePolyD(lon,lat,sz),
+  cx:geoX(lon),cy:geoY(lat),
+}));
+
+// Simplified world outline
+const WORLD_OUTLINES = [
+  {id:'rus',d:'M135 155 L180 130 L180 100 L160 95 L140 100 L120 105 L100 108 L80 100 L60 90 L40 90 L27 95 L30 110 L40 120 L60 125 L80 125 L100 115 L120 120 L135 155Z'},
+  {id:'eur',d:'M130 185 L160 180 L165 195 L150 205 L130 210 L120 200 L125 190Z'},
+  {id:'afr',d:'M130 220 L170 215 L175 260 L160 300 L145 310 L130 300 L125 260 L128 230Z'},
+  {id:'asi',d:'M165 165 L210 155 L230 160 L235 180 L220 195 L200 195 L180 185 L165 175Z'},
+  {id:'nam',d:'M30 155 L75 150 L80 165 L70 195 L55 205 L35 195 L25 175Z'},
+  {id:'sam',d:'M50 205 L80 200 L90 220 L85 260 L70 270 L52 260 L45 235 L48 215Z'},
+  {id:'aus',d:'M225 240 L265 230 L270 260 L260 270 L240 268 L225 255Z'},
+];
+
+// Some key world countries as SVG paths (very simplified)
+const COUNTRY_PATHS = [
+  // Europe
+  {id:'fra',n:'Fransa',d:pathD([[-1,49.5],[2.5,51],[5.5,49.5],[7.5,47.5],[6.8,46],[7.5,43.5],[3,43.3],[1,42.5],[-1.5,43.3],[-1.7,46]])},
+  {id:'deu',n:'Almanya',d:pathD([[6,53.5],[10.5,54.5],[14.5,54],[14.8,52.5],[12,50.3],[10,47.5],[7.5,47.5],[7.5,49],[6,50.5],[6,53.5]])},
+  {id:'esp',n:'İspanya',d:pathD([[-9,43.5],[-1.7,43.3],[1,42.5],[3,40],[0.5,38.5],[-5,36],[-9,37],[-9,40]])},
+  {id:'ita',n:'İtalya',d:pathD([[7,45.7],[13.5,46],[13.7,45.5],[12.5,44.7],[14,44],[15,42.5],[18,40.5],[15.6,38],[12.5,37.5],[11,40],[9,43.5],[7.5,44]])},
+  {id:'pol',n:'Polonya',d:pathD([[14.7,54],[22,54.5],[24,52.5],[24,50.5],[17,49.7],[15,50.5],[14.7,54]])},
+  {id:'ukr',n:'Ukrayna',d:pathD([[22.5,49.5],[31,52.3],[38,49.5],[40,48.5],[37,47.5],[34,46],[33.5,45],[28.5,45.5],[24,47]])},
+  {id:'rou',n:'Romanya',d:pathD([[22,48],[26.5,48],[28.5,46.5],[28.7,45.4],[26.5,44],[23.5,44],[22,44.7]])},
+  {id:'bgr',n:'Bulgaristan',d:pathD([[22.5,44],[26.5,44],[28,43.7],[28,42],[26,41.3],[23,41.4],[22.5,42.3]])},
+  {id:'grc',n:'Yunanistan',d:pathD([[20.5,40],[22,41],[23,41.4],[25,41.3],[26.7,40.4],[25,40.7],[23,40],[22.5,39],[23,38],[21.5,38],[20.5,38.5]])},
+  {id:'geo',n:'Gürcistan',d:pathD([[40,43.5],[44,42.5],[46.5,41.5],[46,41],[43,41],[40,42.5]])},
+  {id:'arm',n:'Ermenistan',d:pathD([[43,41.4],[46,41],[46,39.5],[44.5,39],[43,40]])},
+  {id:'aze',n:'Azerbaycan',d:pathD([[44.8,41.4],[46.5,41.5],[49,41.5],[50,40],[49,39],[46,39.5],[44.5,39]])},
+  // Middle East
+  {id:'syr',n:'Suriye',d:pathD([[36,36.6],[40,37],[41.5,37],[42,36],[41,34.5],[39,33],[36,32.6],[36.4,33.8],[35.8,34.7]])},
+  {id:'irq',n:'Irak',d:pathD([[42,37],[46.5,37],[48,35.8],[48.5,33],[47.5,30.5],[44,29.7],[42,30],[40,32],[39,33],[40,34.5],[42,37]])},
+  {id:'irn',n:'İran',d:pathD([[44.5,39],[50,37.5],[55,38],[60,37],[62,35],[60.5,32],[60,29],[57,25.5],[51,28],[48,30],[45.5,32],[44.5,39]])},
+  {id:'sau',n:'S. Arabistan',d:pathD([[34.7,29],[39,32],[42,30],[46.5,29.5],[48.5,29],[50.5,26],[52,22.5],[55,20],[48,17],[42,16],[38,21],[35.5,26]])},
+  // Russia
+  {id:'rus',n:'Rusya',d:pathD([[27,60],[40,73],[60,72],[80,75],[120,76],[140,75],[160,75],[180,75],[180,68],[160,60],[140,55],[130,55],[120,50],[100,52],[80,55],[60,72],[40,73]])},
+  // Central Asia
+  {id:'kaz',n:'Kazakistan',d:pathD([[47,55],[60,52],[75,53],[83,47],[80,44],[65,42],[55,42],[50,46]])},
+  // East
+  {id:'chn',n:'Çin',d:pathD([[74,38],[85,45],[97,51],[110,50],[123,40],[121,32],[115,22],[105,22],[97,22],[97,28],[88,27],[74,38]])},
+  {id:'ind',n:'Hindistan',d:pathD([[68,24],[77,32],[80,28],[88,27],[92,28],[97,24],[90,22],[85,19],[77,8],[74,15],[70,20]])},
+  // Africa
+  {id:'egy',n:'Mısır',d:pathD([[25,31.5],[34,31.5],[34.5,29],[33,22],[25,22],[25,28]])},
+  {id:'lby',n:'Libya',d:pathD([[11.5,33],[20,32.5],[25,31.5],[25,22],[11,24],[10,30]])},
+  {id:'dza',n:'Cezayir',d:pathD([[-2,35],[8,36.5],[8,33],[12,21],[3,19],[-3,20],[-5,25],[-8,28]])},
+  // Americas
+  {id:'usa',n:'ABD',d:pathD([[-125,49],[-67,47],[-70,42],[-75,38],[-80,32],[-85,30],[-94,29],[-100,26],[-110,31],[-120,34],[-124,40],[-125,49]])},
+  {id:'can',n:'Kanada',d:pathD([[-140,70],[-60,60],[-66,44],[-77,44],[-83,46],[-95,49],[-125,49],[-140,60]])},
+  {id:'bra',n:'Brezilya',d:pathD([[-50,2],[-35,-6],[-37,-12],[-39,-15],[-40,-22],[-46,-24],[-55,-30],[-58,-20],[-60,-15],[-65,-10],[-68,2],[-60,5]])},
+  // Oceania
+  {id:'aus',n:'Avustralya',d:pathD([[113,-22],[120,-34],[131,-31.5],[140,-37.5],[151,-33],[153,-29],[145,-15],[131,-12],[113,-22]])},
+];
+
+const TR_OUTLINE = pathD([[36.2,36.5],[36.7,36.7],[39,36.7],[40.5,37],[42,37.2],[43.5,37.3],[44.6,37.4],[44.8,38],[44.4,39.4],[43.7,40.1],[44,40.5],[43.4,41.1],[42.5,41.4],[40.5,41.4],[39,41.4],[38,41.2],[37,41.1],[36,41.4],[35,42],[33.5,42.05],[32,42],[30.2,41.5],[29.1,41.2],[28,41.1],[27.5,42],[26.6,41.95],[26.1,41.7],[26.4,41],[26.7,40.5],[26.2,40.1],[26.7,39.5],[26.7,38.7],[27.2,38.2],[27.5,37.3],[28.5,36.7],[29.7,36.2],[31,36.2],[32.5,36.3],[33.5,36.1],[34.4,36.2],[35.6,36.4],[36.1,36.4]]);
+
+function initMap(){
+  const svg = document.getElementById('mapsvg');
+  svg.innerHTML='';
+
+  // Defs
+  svg.innerHTML=`<defs>
+    <radialGradient id="seaG" cx="50%" cy="50%" r="80%">
+      <stop offset="0%" stop-color="#12203a"/>
+      <stop offset="100%" stop-color="#060b14"/>
+    </radialGradient>
+    <pattern id="gridP" patternUnits="userSpaceOnUse" width="50" height="50">
+      <path d="M50,0L0,0L0,50" fill="none" stroke="rgba(196,149,74,0.04)" stroke-width=".4"/>
+    </pattern>
+    <filter id="glow"><feGaussianBlur stdDeviation="1" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <rect width="1800" height="900" fill="url(#seaG)"/>
+  <rect width="1800" height="900" fill="url(#gridP)"/>`;
+
+  // World countries
+  const wg = document.createElementNS('http://www.w3.org/2000/svg','g');
+  wg.setAttribute('id','world-layer');
+  COUNTRY_PATHS.forEach(c=>{
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',c.d);
+    p.setAttribute('fill','#2a2418');
+    p.setAttribute('stroke','#1a1208');
+    p.setAttribute('stroke-width','0.5');
+    p.dataset.country=c.id;
+    p.dataset.name=c.n;
+    wg.appendChild(p);
+  });
+  svg.appendChild(wg);
+
+  // TR outline
+  const trBase = document.createElementNS('http://www.w3.org/2000/svg','path');
+  trBase.setAttribute('d',TR_OUTLINE);
+  trBase.setAttribute('fill','#2a2418');
+  trBase.setAttribute('stroke','#0a0806');
+  trBase.setAttribute('stroke-width','0.5');
+  trBase.setAttribute('opacity','0.6');
+  svg.appendChild(trBase);
+
+  // Province layer
+  const pg = document.createElementNS('http://www.w3.org/2000/svg','g');
+  pg.setAttribute('id','prov-layer');
+  PROVINCES.forEach(p=>{
+    const el = document.createElementNS('http://www.w3.org/2000/svg','path');
+    el.setAttribute('d',p.d);
+    el.setAttribute('class','prov');
+    el.setAttribute('id','prov-'+p.id);
+    el.dataset.prov=p.id;
+    el.addEventListener('mouseenter',e=>showProvTip(p,e));
+    el.addEventListener('mouseleave',()=>hideProvTip());
+    el.addEventListener('click',()=>clickProv(p));
+    pg.appendChild(el);
+  });
+  svg.appendChild(pg);
+
+  // Labels
+  const lg = document.createElementNS('http://www.w3.org/2000/svg','g');
+  lg.setAttribute('id','label-layer');
+  svg.appendChild(lg);
+
+  // Pan/zoom
+  let drag=null;
+  svg.addEventListener('mousedown',e=>{
+    if(e.target.dataset.prov) return;
+    drag={sx:e.clientX,sy:e.clientY,vx:G.viewBox.x,vy:G.viewBox.y};
+    e.preventDefault();
+  });
+  svg.addEventListener('mousemove',e=>{
+    if(!drag) return;
+    const r=svg.getBoundingClientRect();
+    const dx=(e.clientX-drag.sx)/r.width*G.viewBox.w;
+    const dy=(e.clientY-drag.sy)/r.height*G.viewBox.h;
+    G.viewBox.x=drag.vx-dx; G.viewBox.y=drag.vy-dy;
+    updateViewBox();
+  });
+  svg.addEventListener('mouseup',()=>drag=null);
+  svg.addEventListener('mouseleave',()=>drag=null);
+  svg.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const f=e.deltaY<0?.82:1.22;
+    const r=svg.getBoundingClientRect();
+    const mx=(e.clientX-r.left)/r.width;
+    const my=(e.clientY-r.top)/r.height;
+    const nw=clamp(G.viewBox.w*f,40,1800);
+    const nh=nw*(G.viewBox.h/G.viewBox.w);
+    G.viewBox.x+=( G.viewBox.w-nw)*mx;
+    G.viewBox.y+=(G.viewBox.h-nh)*my;
+    G.viewBox.w=nw; G.viewBox.h=nh;
+    updateViewBox();
+  },{passive:false});
+
+  renderMap();
+}
+
+function updateViewBox(){
+  document.getElementById('mapsvg').setAttribute('viewBox',`${G.viewBox.x} ${G.viewBox.y} ${G.viewBox.w} ${G.viewBox.h}`);
+  renderMapLabels();
+}
+
+function getProvKind(id){
+  if(id==='ank') return 'capital';
+  if(G.ownedProvs.includes(id)) return 'owned';
+  if(G.claimedProvs.includes(id)) return 'claim';
+  return 'enemy';
+}
+
+function renderMap(){
+  PROVINCES.forEach(p=>{
+    const el=document.getElementById('prov-'+p.id);
+    if(!el) return;
+    const kind = getProvKind(p.id);
+    el.removeAttribute('stroke-dasharray');
+    let fill,stroke,sw='0.12';
+
+    if(G.mapMode==='econ'){
+      // Ekonomi modu: sanayi yoğunluğuna göre renk
+      const ind=p.ind;
+      if(kind==='capital'||kind==='owned'){
+        fill=`hsl(42,${38+ind*4}%,${16+ind*2.5}%)`;
+        stroke='#c4954a'; sw='0.16';
+      } else if(kind==='claim'){
+        fill=`hsl(38,${22+ind*3}%,${13+ind*2}%)`;
+        stroke='#c4954a'; sw='0.15';
+        el.setAttribute('stroke-dasharray','0.6,0.4');
+      } else {
+        fill=`hsl(210,${8+ind*2}%,${10+ind*1.8}%)`;
+        stroke='#141010';
+      }
+    } else if(G.mapMode==='fronts'){
+      // Cephe modu: aktif çatışma bölgeleri vurgulu
+      const frontIds=['ek','kon','krm','nev','aks','afn'];
+      const isFront=frontIds.includes(p.id);
+      if(kind==='capital'||kind==='owned'){
+        fill=isFront?'#8a1518':'#6a2020'; stroke='#3a1010';
+      } else if(kind==='claim'){
+        fill=isFront?'#8a5010':'#5a3a10';
+        stroke='#c4954a'; sw='0.18';
+        el.setAttribute('stroke-dasharray','0.6,0.4');
+      } else {
+        fill=isFront?'#3a1828':'#26202e';
+        stroke=isFront?'#7a3060':'#2e2040';
+        sw=isFront?'0.22':'0.12';
+      }
+    } else {
+      // Siyasi mod (varsayılan)
+      if(kind==='capital'||kind==='owned'){ fill='#c43a3f'; stroke='#5a1a1c'; }
+      else if(kind==='claim'){ fill='#7a5d2e'; stroke='#c4954a'; sw='0.2'; el.setAttribute('stroke-dasharray','0.6,0.4'); }
+      else { fill='#3e3230'; stroke='#1a1208'; }
+    }
+
+    el.setAttribute('fill',fill);
+    el.setAttribute('stroke',stroke);
+    el.setAttribute('stroke-width',sw);
+    if(G.selectedProv===p.id){
+      el.setAttribute('stroke','#e8b96a');
+      el.setAttribute('stroke-width','0.35');
+      el.setAttribute('filter','url(#glow)');
+    } else { el.removeAttribute('filter'); }
+  });
+  updateMapLegend();
+  renderMapLabels();
+}
+
+function updateMapLegend(){
+  const el=document.getElementById('maplegend-content');
+  if(!el) return;
+  const m=G.mapMode;
+  if(m==='econ'){
+    el.innerHTML=`
+      <div class="ml-row"><div class="ml-sw" style="background:#c49020"></div> Yüksek sanayi (10+)</div>
+      <div class="ml-row"><div class="ml-sw" style="background:#7a5a18"></div> Orta sanayi (5-9)</div>
+      <div class="ml-row"><div class="ml-sw" style="background:#2a2010"></div> Düşük sanayi (1-4)</div>
+      <div class="ml-row"><div class="ml-sw" style="background:#1a1c28"></div> Düşman bölge</div>`;
+  } else if(m==='fronts'){
+    el.innerHTML=`
+      <div class="ml-row"><div class="ml-sw" style="background:#8a1518"></div> Aktif cephe hattı</div>
+      <div class="ml-row"><div class="ml-sw" style="background:#6a2020"></div> Kontrol altında</div>
+      <div class="ml-row"><div class="ml-sw" style="background:#5a3a10;border-style:dashed;border-color:#c4954a"></div> Talep (cephe)</div>
+      <div class="ml-row"><div class="ml-sw" style="background:#26202e"></div> Düşman bölge</div>`;
+  } else {
+    el.innerHTML=`
+      <div class="ml-row"><div class="ml-sw" style="background:#c43a3f"></div> Kendi toprağı</div>
+      <div class="ml-row"><div class="ml-sw" style="background:#7a5d2e;border-style:dashed;border-color:#c4954a"></div> Talep edilen</div>
+      <div class="ml-row"><div class="ml-sw" style="background:#5a4055"></div> Düşman devlet</div>
+      <div class="ml-row"><div class="ml-sw" style="background:#3a6a9a"></div> Müttefik</div>`;
+  }
+}
+
+function renderMapLabels(){
+  const lg=document.getElementById('label-layer');
+  if(!lg) return;
+  lg.innerHTML='';
+  if(G.viewBox.w>500) return; // too zoomed out
+  const fs=Math.max(1.2,G.viewBox.w*0.005);
+  PROVINCES.forEach(p=>{
+    const kind=getProvKind(p.id);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',p.cx); t.setAttribute('y',p.cy+0.4);
+    t.setAttribute('text-anchor','middle');
+    t.setAttribute('font-family','Cinzel, serif');
+    t.setAttribute('font-size',fs+'px');
+    t.setAttribute('font-weight','600');
+    t.setAttribute('letter-spacing','.04em');
+    t.setAttribute('pointer-events','none');
+    t.setAttribute('fill', kind==='owned'||kind==='capital'?'#fff': kind==='claim'?'#e8b96a':'#8a7a60');
+    t.textContent=p.name;
+    lg.appendChild(t);
+  });
+}
+
+function showProvTip(p,e){
+  const tip=document.getElementById('prov-tip');
+  const kind=getProvKind(p.id);
+  const kindLabel=kind==='capital'?'BAŞKENT':kind==='owned'?'KENDİ TOPRAĞI':kind==='claim'?'TALEP EDİLİYOR':'DÜŞMAN TOPRAĞI';
+  tip.innerHTML=`
+    <div class="pn">${p.name}</div>
+    <div class="pt">${kindLabel}</div>
+    <div class="pr"><span>Nüfus</span><span class="v">${fmtNum(p.pop)}</span></div>
+    <div class="pr"><span>Sanayi</span><span class="v">${p.ind} fabrika</span></div>
+    <div class="pr"><span>Gelir</span><span class="v">${fmtMoney(p.pop*4.2)}/gün</span></div>
+    <div class="pr"><span>Durum</span><span class="v" style="color:${kind==='owned'||kind==='capital'?'var(--green2)':kind==='claim'?'var(--gold2)':'var(--red2)'}">${kindLabel}</span></div>
+  `;
+  tip.style.display='block';
+  tip.style.left=(e.clientX+14)+'px';
+  tip.style.top=(e.clientY+14)+'px';
+}
+function hideProvTip(){ document.getElementById('prov-tip').style.display='none'; }
+
+function clickProv(p){
+  G.selectedProv=p.id;
+  renderMap();
+  setTab('hq');
+}
+
+function mapZoom(f){
+  const cx=G.viewBox.x+G.viewBox.w/2, cy=G.viewBox.y+G.viewBox.h/2;
+  const nw=clamp(G.viewBox.w*f,40,1800);
+  const nh=nw*(G.viewBox.h/G.viewBox.w);
+  G.viewBox.x=cx-nw/2; G.viewBox.y=cy-nh/2;
+  G.viewBox.w=nw; G.viewBox.h=nh;
+  updateViewBox();
+}
+function mapReset(){ G.viewBox={x:1100,y:230,w:280,h:200}; updateViewBox(); }
+function mapWorld(){ G.viewBox={x:0,y:50,w:1800,h:700}; updateViewBox(); }
+function setMapMode(m){
+  G.mapMode=m;
+  ['political','fronts','econ'].forEach(x=>document.getElementById('mm-'+x)?.classList.toggle('active',x===m));
+  renderMap();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GAME TICK
+// ═══════════════════════════════════════════════════════════════
+
+function setSpeed(s){
+  G.speed=s;
+  clearInterval(G.tickInterval);
+  if(s>0){ const ms=[0,5000,2500,1000][s]; G.tickInterval=setInterval(gameTick,ms); }
+  [0,1,2,3].forEach(i=>{
+    const b=document.getElementById('spd-'+i);
+    if(b) b.classList.toggle('active',i===s);
+  });
+  document.getElementById('tb-speed').textContent = s===0?'⏸ Duraklatıldı':'Hız: '+s+'x';
+}
+
+function gameTick(){
+  // Advance date
+  G.date = new Date(G.date.getTime()+86400000);
+
+  // Resources
+  const r=G.res;
+  r.treasury = Math.max(0, r.treasury + r.treasuryD);
+  r.manpower = Math.min(500000, r.manpower + r.manpowerD);
+  r.food = Math.max(0, r.food + r.foodD);
+  r.oil = Math.max(0, r.oil + r.oilD);
+  r.steel = Math.max(0, r.steel + r.steelD);
+  G.population += G.populationD;
+
+  // Research progress
+  G.research.active.forEach(t=>{ t.daysLeft=Math.max(0,t.daysLeft-1); t.progress=Math.min(100,t.progress+(100/Math.max(1,t.daysLeft+t.progress/100))); });
+  // Complete research
+  G.research.active = G.research.active.filter(t=>{
+    if(t.daysLeft<=0){
+      G.research.completed.push(t.name);
+      addEvent('ARAŞTIRMA','g',`${t.name} tamamlandı!`,`Araştırma tamamlandı. Bonus: ${t.bonus}`);
+      return false;
+    }
+    return true;
+  });
+
+  // Training queue
+  G.army.trainingQueue.forEach(q=>{ q.daysLeft=Math.max(0,q.daysLeft-1); });
+  G.army.trainingQueue = G.army.trainingQueue.filter(q=>{
+    if(q.daysLeft<=0){
+      G.army.divisions.push({id:'d'+Date.now(),name:q.name,kind:'Piyade',size:q.size,eq:70,exp:'Acemi',loc:'Ankara',status:'Hazır',frontline:false,training:0});
+      G.army.totalSoldiers+=q.size;
+      addEvent('ORDU','g',`${q.name} hazır!`,`Eğitim tamamlandı. Yeni birlik savaşa hazır.`);
+      return false;
+    }
+    return true;
+  });
+
+  // Industry build queue
+  G.industry.buildQueue.forEach(b=>{ b.daysLeft=Math.max(0,b.daysLeft-1); b.progress=Math.min(100,(b.total-b.daysLeft)/b.total*100); });
+  G.industry.buildQueue = G.industry.buildQueue.filter(b=>{
+    if(b.daysLeft<=0){
+      if(b.kind==='askeri') G.industry.milFact++;
+      else G.industry.civFact++;
+      G.res.treasuryD+=100000;
+      addEvent('SANAYİ','g',`${b.what} tamamlandı!`,`${b.loc}'da inşaat bitti. Üretim kapasitesi arttı.`);
+      return false;
+    }
+    return true;
+  });
+
+  // Siyasi sermaye üretimi
+  G.politicalCapital = Math.min(100, G.politicalCapital + Math.round(G.politicalCapitalD * (0.5 + G.approval/200)));
+
+  // Onay oranı — sosyal gruplardan hesapla
+  if(G.socialGroups && G.socialGroups.length){
+    const weightedAppr = G.socialGroups.reduce((sum,g)=> sum + g.satisfaction * g.size, 0);
+    G.approval = clamp(Math.round(weightedAppr * 0.85 + G.stability * 0.1 + G.happiness * 0.05), 0, 100);
+  }
+
+  // Meşruiyet yavaş değişim
+  if(G.legitimacy < G.approval) G.legitimacy = Math.min(100, G.legitimacy + 0.1);
+  else if(G.legitimacy > G.approval + 15) G.legitimacy = Math.max(0, G.legitimacy - 0.05);
+
+  // Geçmiş kayıt
+  G.history.treasury.push(Math.round(G.res.treasury/1e6));
+  G.history.approval.push(G.approval);
+  if(G.history.treasury.length>30) G.history.treasury.shift();
+  if(G.history.approval.length>30) G.history.approval.shift();
+
+  // Onay düşükse sosyal dengesizlik
+  if(G.approval < 30 && Math.random()<0.05){
+    addEvent('KRİZ','r','Halk memnuniyetsizliği tırmanıyor','Onay oranı kritik seviyede. Sokakta gerginlik artıyor. Acil tedbir alınmazsa istikrar sarsılabilir.');
+    G.stability = Math.max(0, G.stability - 3);
+  }
+
+  // Olağandışı olaylar havuzu (zenginleştirilmiş)
+  if(Math.random()<0.04){
+    const evs=[
+      {tag:'KRİZ',     kind:'r',title:'Düşman keşif uçağı tespit edildi',      body:'Sınır hattında yabancı uçak görüldü. Hava savunma alarma geçti.'},
+      {tag:'EKONOMİ',  kind:'g',title:'Buğday verimi rekor kırdı',              body:'Bu ay buğday verimi beklentinin %22 üzerinde. Gıda ihracatı için fırsat.'},
+      {tag:'İÇİŞLERİ', kind:'',title:'Pahalılık protestosu',                   body:'Başkent meydanında 500 kişilik gösteri. Mutluluk -2.',apply:()=>{G.happiness=clamp(G.happiness-2,0,100);}},
+      {tag:'EKONOMİ',  kind:'g',title:'Yabancı yatırım talebi',                body:'Alman otomotiv şirketi fabrika kurmak istiyor. Hazineye ek kaynak gelebilir.',apply:()=>{G.res.treasury+=2_500_000;}},
+      {tag:'ORDU',     kind:'g',title:'Desertör oranı düştü',                  body:'Ordu moralindeki yükselişle kaçak asker oranı sıfıra yaklaştı. Moral +2.',apply:()=>{G.army.morale=clamp(G.army.morale+2,0,100);}},
+      {tag:'İSTİHBARAT',kind:'r',title:'Çift ajan tespit edildi',               body:'Savunma bakanlığı içinde yabancı istihbarat ajanı deşifre edildi. İstikrar -2.',apply:()=>{G.stability=clamp(G.stability-2,0,100);}},
+      {tag:'EKONOMİ',  kind:'r',title:'Petrol fiyatları yükseldi',              body:'Küresel petrol fiyatları %15 arttı. Günlük petrol giderleri artacak.',apply:()=>{G.res.oilD=Math.round(G.res.oilD*0.85);}},
+      {tag:'SOSYAL',   kind:'g',title:'Üniversite açılışı yapıldı',             body:"Ankara'da yeni teknik üniversite açıldı. Araştırma puanı artışı bekleniyor.",apply:()=>{G.research.points+=5;}},
+      {tag:'TARIM',    kind:'r',title:'Kuraklık uyarısı',                       body:"Orta Anadolu'da yağış eksikliği gözlemlendi. Tarım verimi tehdit altında.",apply:()=>{G.res.foodD=Math.round(G.res.foodD*0.9);}},
+      {tag:'DİPLOMASİ',kind:'g',title:'Uluslararası tanıma',                   body:"3 yeni ülke Cumhuriyeti'ni resmen tanıdı. Meşruiyet +3, siyasi sermaye +5.",apply:()=>{G.legitimacy=clamp(G.legitimacy+3,0,100);G.politicalCapital=Math.min(100,G.politicalCapital+5);}},
+      {tag:'ORDU',     kind:'r',title:'Askeri teçhizat arızası',                body:"2. Mekanize Tümeni'nde teknik arıza. Onarım sürüyor.",apply:()=>{const d=G.army.divisions.find(x=>x.kind==='Mekanize');if(d)d.eq=clamp(d.eq-8,0,100);}},
+      {tag:'EKONOMİ',  kind:'g',title:'Turizm gelirleri arttı',                body:'Tatil sezonu boyunca turizm gelirleri %30 yükseldi. +₺1.2M hazineye.',apply:()=>{G.res.treasury+=1_200_000;}},
+      {tag:'İÇİŞLERİ', kind:'r',title:'Konut krizi büyüyor',                   body:'Göç bölgelerinde konut sıkıntısı tırmanıyor. Halk mutluluğu -3.',apply:()=>{G.happiness=clamp(G.happiness-3,0,100);}},
+      {tag:'ARAŞTIRMA',kind:'g',title:'Savunma sanayiinde patent',              body:'Yerli topçu sistemine uluslararası patent alındı. Prestij arttı.'},
+      {tag:'KRİZ',     kind:'r',title:'Sınır ihlali raporu',                   body:'Güney sınırında silahlı grup tespit edildi. Güvenlik kuvvetleri alarma geçti.',apply:()=>{G.warSupport=clamp(G.warSupport+4,0,100);}},
+    ];
+    const ev=evs[Math.floor(Math.random()*evs.length)];
+    addEvent(ev.tag,ev.kind,ev.title,ev.body);
+    if(ev.apply) ev.apply();
+  }
+
+  // Treasury warning
+  if(r.treasury<5000000 && G.date.getDate()===1){
+    addEvent('MALİYE','r','Hazine kritik seviyede!','Günlük harcamalar geliri aşıyor. Vergi oranını yükseltmeyi düşünün.');
+  }
+
+  // Sosyal grup memnuniyeti güncelle (her gün hafif kayma)
+  if(G.socialGroups){
+    G.socialGroups.forEach(sg=>{
+      const drift = (G.happiness - sg.satisfaction) * 0.008;
+      sg.satisfaction = clamp(sg.satisfaction + drift + (Math.random()-.5)*0.4, 0, 100);
+      sg.satisfaction = Math.round(sg.satisfaction*10)/10;
+    });
+  }
+
+  // Auto-save her 7 günde bir
+  if(G.date.getDay()===0) saveGame();
+
+  renderAll();
+}
+
+function addEvent(tag,kind,title,body){
+  G.events.unshift({id:'e'+Date.now(),tag,kind,title,body,read:false,date:fmtDate(G.date)});
+  if(G.events.length>30) G.events.pop();
+  showToast(tag,title,body);
+  updateEventBadge();
+}
+
+function updateEventBadge(){
+  const unread=G.events.filter(e=>!e.read).length;
+  const badge=document.getElementById('events-badge');
+  if(unread>0){ badge.textContent=unread; badge.style.display=''; }
+  else badge.style.display='none';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+
+function renderAll(){
+  renderTopBar();
+  renderPanel();
+  renderTicker();
+  updateEventBadge();
+}
+
+function renderTopBar(){
+  document.getElementById('tb-date').textContent=fmtDate(G.date);
+
+  // Onay oranı ark güncelle
+  const apprEl=document.getElementById('appr-arc');
+  const apprPctEl=document.getElementById('appr-pct');
+  if(apprEl&&apprPctEl){
+    const totalArc=69.1, pct=clamp(G.approval,0,100)/100;
+    const offset=totalArc*(1-pct);
+    apprEl.setAttribute('stroke-dashoffset',offset.toFixed(1));
+    const color=G.approval>=60?'#7ab84a':G.approval>=35?'#c4954a':'#e85055';
+    apprEl.setAttribute('stroke',color);
+    apprPctEl.textContent=G.approval+'%';
+    apprPctEl.style.color=color;
+  }
+  // Siyasi sermaye
+  const pcEl=document.getElementById('tb-pc');
+  if(pcEl) pcEl.textContent=Math.round(G.politicalCapital);
+
+  const r=G.res;
+  const stats=[
+    {icon:'<circle cx="12" cy="12" r="9"/><path d="M9 8H14A2 2 0 0 1 14 12H10A2 2 0 0 0 10 16H15" stroke-linecap="round"/>',val:fmtMoney(r.treasury),d:r.treasuryD,lbl:'Hazine'},
+    {icon:'<circle cx="9" cy="8" r="3"/><path d="M3 21C3 16 6 14 9 14C12 14 15 16 15 21"/><circle cx="17" cy="9" r="2.5"/><path d="M14 21C14 17 16 15 18 15C20 15 22 17 22 21"/>',val:fmtNum(r.manpower),d:r.manpowerD,lbl:'İnsan Gücü'},
+    {icon:'<path d="M12 3C8 9 6 13 6 16C6 19.3 8.7 22 12 22C15.3 22 18 19.3 18 16C18 13 16 9 12 3Z"/><path d="M9 16C9 18 10.3 19 12 19" stroke-linecap="round"/>',val:fmtNum(r.oil),d:r.oilD,lbl:'Petrol'},
+    {icon:'<path d="M3 18L8 6L11 6L13 18Z"/><path d="M21 18L16 6L13 6"/><path d="M3 21H21"/>',val:fmtNum(r.steel),d:r.steelD,lbl:'Çelik'},
+    {icon:'<path d="M12 22V8" stroke-linecap="round"/><path d="M12 8C9 8 7 6 7 3C10 3 12 5 12 8Z"/><path d="M12 8C15 8 17 6 17 3C14 3 12 5 12 8Z"/><path d="M12 13C9 13 7 11 7 8C10 8 12 10 12 13Z"/><path d="M12 13C15 13 17 11 17 8C14 8 12 10 12 13Z"/>',val:fmtNum(r.food),d:r.foodD,lbl:'Gıda'},
+    {icon:'<path d="M12 21C5 16 2 12 2 8C2 5 4 3 7 3C9 3 11 4 12 6C13 4 15 3 17 3C20 3 22 5 22 8C22 12 19 16 12 21Z"/>',val:G.happiness+'%',d:null,lbl:'Mutluluk'},
+    {icon:'<path d="M12 2L4 6V12C4 17 7 20 12 22C17 20 20 17 20 12V6Z"/><path d="M9 12L11 14L15 10" stroke-linecap="round" stroke-linejoin="round"/>',val:G.stability+'%',d:null,lbl:'İstikrar'},
+  ];
+  document.getElementById('topstats').innerHTML=stats.map(s=>`
+    <div class="ts">
+      <svg class="ts-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">${s.icon}</svg>
+      <div class="ts-data">
+        <div class="ts-val">${s.val}${s.d!=null?`<span class="ts-d ${s.d>=0?'pos':'neg'}">${fmtD(s.d)}</span>`:''}</div>
+        <div class="ts-lbl">${s.lbl}</div>
+      </div>
+    </div>`).join('');
+}
+
+function pbarHTML(pct,cls='',lbl=''){
+  const p=clamp(Math.round(pct),0,100);
+  return `${lbl?`<div class="sl"><div class="top"><span class="l">${lbl}</span><span class="v">${p}%</span></div></div>`:''}
+    <div class="pbar ${cls}"><i style="width:${p}%"></i></div>`;
+}
+function slHTML(lbl,val,pct,cls=''){
+  return `<div class="sl"><div class="top"><span class="l">${lbl}</span><span class="v">${val}</span></div>
+    <div class="pbar ${cls}"><i style="width:${clamp(pct,0,100)}%"></i></div></div>`;
+}
+function irowHTML(l,v,cls=''){ return `<div class="irow"><span class="l">${l}</span><span class="v ${cls}">${v}</span></div>`; }
+function sectHTML(title,content,right=''){ return `<div class="sect"><div class="stitle"><span>${title}</span>${right}</div>${content}</div>`; }
+function cardHTML(title,rows,btns=''){ return `<div class="card"><div class="card-title">${title}</div>${rows}${btns?`<div class="btn-row">${btns}</div>`:''}</div>`; }
+function pill(t,cls=''){ return `<span class="pill ${cls}">${t}</span>`; }
+function btn(label,onclick,cls='',disabled=false){
+  const safeOnclick = onclick ? String(onclick).replace(/&/g,'&amp;').replace(/"/g,'&quot;') : '';
+  return `<button class="btn ${cls}"${disabled?' disabled':''}${safeOnclick?` onclick="${safeOnclick}"`:''}>${label}</button>`;
+}
+
+// ── TAB NAVIGATION ──
+function setTab(tab){
+  G.activeTab=tab;
+  document.querySelectorAll('.rb').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  renderPanel();
+}
+
+function renderPanel(){
+  const header=document.getElementById('panel-header');
+  const tabs=document.getElementById('panel-tabs');
+  const body=document.getElementById('panel-body');
+  tabs.style.display='none';
+  tabs.innerHTML='';
+
+  switch(G.activeTab){
+    case 'hq':      renderHQ(header,tabs,body); break;
+    case 'army':    renderArmy(header,tabs,body); break;
+    case 'industry':renderIndustry(header,tabs,body); break;
+    case 'agri':    renderAgri(header,tabs,body); break;
+    case 'econ':    renderEcon(header,tabs,body); break;
+    case 'diplo':   renderDiplo(header,tabs,body); break;
+    case 'research':renderResearch(header,tabs,body); break;
+    case 'interior':  renderInterior(header,tabs,body); break;
+    case 'parliament':renderParliament(header,tabs,body); break;
+    case 'events':    renderEvents(header,tabs,body); break;
+  }
+}
+
+function setSubTab(key,val){ G.activeSubTab[key]=val; renderPanel(); }
+function getSubTab(key,def){ return G.activeSubTab[key]||def; }
+
+function renderHeader(el,crumb,title,sub=''){
+  el.innerHTML=`<div class="ph"><div class="crumb">${crumb}</div><h2>${title}</h2>${sub?`<div class="sub">${sub}</div>`:''}</div>`;
+}
+function renderSubTabs(el,tabs,key){
+  el.style.display='';
+  el.innerHTML=tabs.map(([id,label])=>`<button class="stab${getSubTab(key,'')===id||(!G.activeSubTab[key]&&tabs[0][0]===id)?' active':''}" onclick="setSubTab('${key}','${id}')">${label}</button>`).join('');
+}
+
+// ── HQ ──
+function renderHQ(header,tabs,body){
+  renderHeader(header,'Cumhurbaşkanlığı','Günlük Brifing',fmtDate(G.date)+' — Genel Durum Raporu');
+
+  // Eğer il seçiliyse il detayı göster
+  if(G.selectedProv){
+    const p=PROVINCES.find(x=>x.id===G.selectedProv);
+    if(p){
+      const kind=getProvKind(p.id);
+      const owned=kind==='owned'||kind==='capital';
+      body.innerHTML=`
+        ${sectHTML('Vilayet: '+p.name,''+
+          irowHTML('Nüfus',fmtNum(p.pop))+
+          irowHTML('Sanayi',p.ind+' fabrika')+
+          irowHTML('Tahmini Gelir',fmtMoney(p.pop*4.2)+'/gün')+
+          irowHTML('Altyapı',(40+p.ind*5)+'%')+
+          irowHTML('Kontrol',pill(kind==='capital'?'Başkent':kind==='owned'?'Kendi':kind==='claim'?'Talep':'Düşman',kind==='owned'||kind==='capital'?'g':kind==='claim'?'':'r'))
+        )}
+        ${owned?sectHTML('Konuşlu Kuvvetler',''+
+          irowHTML('Konuşlu birlik',p.id==='ank'?'1. Piyade Tümeni':'2. Mek. Tümeni')+
+          irowHTML('Asker sayısı',p.id==='ank'?'9.000':'5.400')+
+          irowHTML('Savunma hattı',p.id==='ank'?'Güçlü':'Zayıf'),
+          `<div class="btn-row">${btn('Birlik Konuşlandır','reinforceFront()')}</div>`
+        ):''}
+        ${kind==='claim'?sectHTML('Eylemler','',
+          `<div class="btn-row">${btn('Toprak Talep Et','claimProv("'+p.id+'")')+btn('Diplomatik Baskı',`diplomaticPressure('${p.id}')`,'ghost')+btn('Saldırı Başlat',`showAttackModal('${p.id}')`,'red')}</div>`
+        ):''}
+        ${kind==='enemy'?sectHTML('Askeri Seçenekler','',
+          `<div class="btn-row">${btn('İstihbarat Topla',`gatherIntel('${p.id}')`,'ghost')+btn('Saldırı Planla',`planAttack('${p.id}')`,'ghost')+btn('Saldırı Başlat',`showAttackModal('${p.id}')`,'red')}</div>`
+        ):''}
+        <div class="sect"><button class="btn ghost sm" onclick="G.selectedProv=null;renderPanel()">← Cumhurbaşkanlığı'na Dön</button></div>`;
+      return;
+    }
+  }
+
+  // Zafer hedefi hesapla
+  const ownedCount = G.ownedProvs.length + (G.ownedProvs.includes('ank')?0:1);
+  const victoryGoals=[
+    {label:'20 İl Kontrolü',done:G.ownedProvs.length>=20},
+    {label:'₺500M Hazine',done:G.res.treasury>=500_000_000},
+    {label:'%75 Onay',done:G.approval>=75},
+    {label:'50K Asker',done:G.army.totalSoldiers>=50000},
+  ];
+  const doneCount=victoryGoals.filter(x=>x.done).length;
+  const victoryPct=Math.round(doneCount/victoryGoals.length*100);
+
+  // Aktif krizler
+  const crisisHtml = G.crises && G.crises.length ? G.crises.map(c=>`
+    <div class="crisis-card">
+      <div class="crisis-tag">${c.tag}</div>
+      <div class="crisis-title">${c.title}</div>
+      <div class="crisis-body">${c.body}</div>
+      <div class="btn-row">${btn('Müdahale Et',`resolveCrisis('${c.id}')`)+'&nbsp;'+btn('Ertele',`dismissCrisis('${c.id}')`,'ghost sm')}</div>
+    </div>`).join('') : '';
+
+  const unread=G.events.filter(e=>!e.read).length;
+  const dec=G.pendingDecision ? G.decisions.find(d=>d.id===G.pendingDecision) : null;
+
+  body.innerHTML=`
+    <!-- Zafer İlerlemesi -->
+    <div class="sect">
+      <div class="victory-bar">
+        <div class="vb-top"><span class="t">Zafer Yolu</span><span class="v">${doneCount}/${victoryGoals.length} Hedef</span></div>
+        <div class="vb-goals">${victoryGoals.map(g=>`<div class="vb-goal ${g.done?'done':'todo'}">${g.done?'✓ ':''} ${g.label}</div>`).join('')}</div>
+        <div style="height:5px;background:var(--bg);border:1px solid var(--golddim);overflow:hidden"><i style="display:block;height:100%;width:${victoryPct}%;background:linear-gradient(90deg,var(--golddim),var(--gold2),#fff8c0);transition:width .6s"></i></div>
+      </div>
+    </div>
+
+    <!-- Ana Göstergeler: 4'lü grid -->
+    <div class="sect">
+      <div class="stitle"><span>Devlet Göstergeleri</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        ${[
+          {lbl:'Onay Oranı',val:G.approval+'%',bar:G.approval,cls:G.approval>=60?'green':G.approval>=35?'':'red'},
+          {lbl:'İstikrar',val:G.stability+'%',bar:G.stability,cls:''},
+          {lbl:'Halk Mutluluğu',val:G.happiness+'%',bar:G.happiness,cls:''},
+          {lbl:'Meşruiyet',val:Math.round(G.legitimacy)+'%',bar:G.legitimacy,cls:'green'},
+        ].map(x=>`<div style="background:var(--bg2);border:1px solid var(--line);padding:8px 10px">
+          <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:4px">
+            <span style="color:var(--inkdim);font-family:'Bebas Neue';letter-spacing:.12em">${x.lbl}</span>
+            <span style="font-family:'IBM Plex Mono';color:var(--ink);font-weight:700">${x.val}</span>
+          </div>
+          <div class="pbar ${x.cls} thin"><i style="width:${x.bar}%"></i></div>
+        </div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Kabine Bakanları -->
+    ${sectHTML('Kabine', `<div class="minister-grid">
+      ${(G.ministers||[]).map(m=>`<div class="min-card">
+        <div class="min-role">${m.role}</div>
+        <div class="min-name">${m.name}</div>
+        <div class="min-eff">
+          <div class="min-eff-bar"><i style="width:${m.eff}%"></i></div>
+          <span class="min-eff-num">${m.eff}%</span>
+          ${pill(m.trait,'b')}
+        </div>
+      </div>`).join('')}
+    </div>`)}
+
+    <!-- Aktif Krizler -->
+    ${crisisHtml ? `<div class="sect"><div class="stitle"><span style="color:var(--red2)">⚠ Aktif Kriz</span></div>${crisisHtml}</div>` : ''}
+
+    <!-- Bekleyen Karar -->
+    ${dec ? sectHTML('Bekleyen Karar', `<div class="card">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">${pill(dec.tag,'r')}<span class="card-title" style="margin:0">${dec.title}</span></div>
+      <div style="font-size:11px;color:var(--ink2);margin-bottom:8px;line-height:1.6">${dec.body}</div>
+      <div class="btn-row">${dec.choices.map(c=>`<button class="btn sm ${c.style}" onclick="resolveDecision('${dec.id}','${c.action}')">${c.label}</button>`).join('')}</div>
+    </div>`) : ''}
+
+    <!-- Son Haberler -->
+    ${sectHTML('Son Gelişmeler', G.events.slice(0,4).map(e=>`
+      <div style="display:flex;gap:8px;align-items:baseline;padding:7px 0;border-top:1px solid rgba(196,149,74,.07)">
+        <div style="flex-shrink:0">${pill(e.tag,e.kind==='r'?'r':e.kind==='g'?'g':'')}</div>
+        <div>
+          <div style="font-size:11px;color:var(--ink);font-weight:600;margin-bottom:1px">${e.title}</div>
+          <div style="font-size:10px;color:var(--inkdim)">${e.date||'Bugün'}</div>
+        </div>
+        ${!e.read?'<span class="pulse" style="width:5px;height:5px;border-radius:50%;background:var(--red);display:inline-block;margin-left:auto;flex-shrink:0;margin-top:4px"></span>':''}
+      </div>`).join(''),
+      `<button class="btn ghost sm" onclick="setTab('events')">Tümünü Gör →</button>`
+    )}`;
+}
+
+function resolveCrisis(id){
+  if(!G.crises) return;
+  const c=G.crises.find(x=>x.id===id);
+  if(!c) return;
+  const cost=c.cost||1500000;
+  if(G.res.treasury<cost){ showToast('MALİYE','Yetersiz hazine',`Kriz müdahalesi için ${fmtMoney(cost)} gerekli.`); return; }
+  G.res.treasury-=cost;
+  G.stability=clamp(G.stability+(c.stabilityGain||5),0,100);
+  G.crises=G.crises.filter(x=>x.id!==id);
+  addEvent('KRİZ','g','Kriz çözüldü',`${c.title} müdahalesi tamamlandı. İstikrar iyileşti.`);
+  renderAll();
+}
+function dismissCrisis(id){
+  if(!G.crises) return;
+  G.crises=G.crises.filter(x=>x.id!==id);
+  G.stability=clamp(G.stability-3,0,100);
+  showToast('KRİZ','Kriz ertelendi','Müdahale geciktirildi. İstikrar -3.');
+  renderAll();
+}
+
+function claimProv(id){
+  if(!G.claimedProvs.includes(id)) return;
+  if(G.res.treasury<2000000){ showToast('MALİYE','Yetersiz hazine!','Toprak talep etmek için en az ₺2M gerekli.'); return; }
+  G.res.treasury-=2000000;
+  addEvent('DİPLOMASİ','g','Toprak talebi iletildi','Uluslararası topluma resmi talep bildirildi. Diplomatik gerilim artabilir.');
+  renderAll();
+}
+
+
+function diplomaticPressure(id){
+  const p=PROVINCES.find(x=>x.id===id);
+  if(!p){ showToast('DİPLOMASİ','Hedef bulunamadı','Vilayet bilgisi okunamadı.'); return; }
+  const cost=750000;
+  if(G.res.treasury<cost){ showToast('MALİYE','Yetersiz hazine',`Diplomatik baskı için ${fmtMoney(cost)} gerekli.`); return; }
+  G.res.treasury-=cost;
+  if(G.claimedProvs.includes(id)){
+    const af=G.diplo.relations.find(r=>r.code==='af');
+    if(af) af.rel=Math.max(-100,af.rel-4);
+    G.stability=clamp(G.stability+2,0,100);
+    addEvent('DİPLOMASİ','g','Diplomatik baskı başlatıldı',`${p.name} üzerindeki Cumhuriyet talebi yabancı temsilciliklere bildirildi. İstikrar +2.`);
+  }else{
+    addEvent('DİPLOMASİ','','Diplomatik not gönderildi',`${p.name} için diplomatik dosya açıldı.`);
+  }
+  renderAll();
+}
+
+function gatherIntel(id){
+  const p=PROVINCES.find(x=>x.id===id);
+  if(!p){ showToast('İSTİHBARAT','Hedef bulunamadı','Vilayet bilgisi okunamadı.'); return; }
+  const cost=350000;
+  if(G.res.treasury<cost){ showToast('MALİYE','Yetersiz hazine',`İstihbarat operasyonu için ${fmtMoney(cost)} gerekli.`); return; }
+  G.res.treasury-=cost;
+  G.warSupport=clamp(G.warSupport+2,0,100);
+  const est=Math.max(1200,Math.round((p.pop/1000)*(1.5+p.ind*0.35)));
+  addEvent('İSTİHBARAT','g',`${p.name} raporu hazır`,`${p.name} çevresinde yaklaşık ${fmtNum(est)} kişilik düşman unsuru ve ${p.ind} sanayi merkezi tespit edildi. Savaş desteği +2.`);
+  showToast('İSTİHBARAT','Rapor hazırlandı',`${p.name} için saha raporu eklendi.`);
+  renderAll();
+}
+
+function planAttack(id){
+  const p=PROVINCES.find(x=>x.id===id);
+  if(!p){ showToast('GENELKURMAY','Hedef bulunamadı','Vilayet bilgisi okunamadı.'); return; }
+  const cost=1000000;
+  if(G.res.treasury<cost){ showToast('MALİYE','Yetersiz hazine',`Saldırı planı için ${fmtMoney(cost)} gerekli.`); return; }
+  G.res.treasury-=cost;
+  G.warSupport=clamp(G.warSupport+5,0,100);
+  G.army.morale=clamp(G.army.morale+3,0,100);
+  addEvent('GENELKURMAY','r',`${p.name} taarruz planı`,`${p.name} için kurmay planı hazırlandı. Savaş desteği +5, ordu morali +3.`);
+  showToast('GENELKURMAY','Saldırı planlandı',`${p.name} hedef planı hazır.`);
+  renderAll();
+}
+
+
+function estimateEnemyPower(p){
+  const kind=getProvKind(p.id);
+  const base = Math.max(1200, Math.round((p.pop/1000)*(kind==='claim'?1.4:2.2) + p.ind*900));
+  const fort = kind==='claim'?0.95:1.18;
+  return Math.round(base*fort);
+}
+function estimateOurAttackPower(){
+  const front=G.army.divisions.filter(d=>d.frontline);
+  const ready=G.army.divisions.filter(d=>!d.training || d.training<=0);
+  const used=(front.length?front:ready);
+  let power=used.reduce((sum,d)=>sum + d.size*(d.eq/100)*(d.frontline?1.15:1),0);
+  if(power<=0) power=G.army.totalSoldiers*0.55;
+  power*= (0.75 + G.army.morale/140);
+  power*= (0.85 + G.warSupport/180);
+  return Math.round(power);
+}
+
+const ATTACK_TYPES={
+  quick:{name:'Hızlı Taarruz',desc:'Düşük maliyet, hızlı sonuç. Başarı şansı normal.',treasury:1800000,manpower:800,oil:140,steel:90,odds:0,loss:1.00,war:2},
+  artillery:{name:'Topçu Destekli Taarruz',desc:'Çelik ve mühimmat harcar; başarı şansı yüksek.',treasury:3200000,manpower:1100,oil:240,steel:320,odds:.13,loss:.90,war:4},
+  siege:{name:'Kuşatma Harekâtı',desc:'Daha pahalı ama kayıp oranı düşük ve kalelere etkili.',treasury:4200000,manpower:1000,oil:210,steel:260,odds:.08,loss:.65,war:3},
+  air:{name:'Hava Destekli Taarruz',desc:'Petrol harcar; sanayili şehirlerde avantaj sağlar.',treasury:5200000,manpower:950,oil:650,steel:180,odds:.18,loss:.80,war:5}
+};
+function showAttackModal(id){
+  const p=PROVINCES.find(x=>x.id===id);
+  if(!p){ showToast('GENELKURMAY','Hedef bulunamadı','Vilayet bilgisi okunamadı.'); return; }
+  const kind=getProvKind(id);
+  if(kind==='owned'||kind==='capital'){
+    showToast('GENELKURMAY','Geçersiz hedef','Kendi toprağına saldırı yapılamaz.');
+    return;
+  }
+  const enemy=estimateEnemyPower(p);
+  const our=estimateOurAttackPower();
+  document.getElementById('modal-content').innerHTML=`
+    <div class="modal-tag">⚔ GENELKURMAY HAREKÂT EMRİ</div>
+    <div class="modal-title">${p.name} Taarruzu</div>
+    <div class="modal-body">
+      Hedef vilayet: <strong style="color:var(--gold2)">${p.name}</strong><br/>
+      Tahmini düşman gücü: <strong>${fmtNum(enemy)}</strong><br/>
+      Mevcut taarruz gücümüz: <strong>${fmtNum(our)}</strong><br/><br/>
+      Saldırı çeşidini seçin:
+    </div>
+    <div class="modal-actions" style="justify-content:stretch;display:block">
+      ${Object.keys(ATTACK_TYPES).map(k=>{
+        const a=ATTACK_TYPES[k];
+        const odds=Math.round(clamp(our/(our+enemy)+a.odds,0.08,0.92)*100);
+        const disabled=(G.res.treasury<a.treasury||G.res.manpower<a.manpower||G.res.oil<a.oil||G.res.steel<a.steel);
+        return `<button class="btn ${k==='quick'?'':'red'}" ${disabled?'disabled':''} style="width:100%;margin:4px 0;justify-content:space-between" onclick="attackProv('${id}','${k}')">
+          <span>${a.name} — %${odds}</span>
+          <span style="font-family:IBM Plex Mono;font-size:10px">${fmtMoney(a.treasury)} · ♟${fmtNum(a.manpower)} · ●${fmtNum(a.oil)} · ◆${fmtNum(a.steel)}</span>
+        </button>
+        <div style="font-size:11px;color:var(--inkdim);margin:0 0 6px 2px">${a.desc}</div>`;
+      }).join('')}
+      <button class="btn ghost" onclick="closeModal()">Vazgeç</button>
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+}
+function attackProv(id,type='quick'){
+  const p=PROVINCES.find(x=>x.id===id);
+  if(!p){ showToast('GENELKURMAY','Hedef bulunamadı','Vilayet bilgisi okunamadı.'); return; }
+  const kind=getProvKind(id);
+  if(kind==='owned'||kind==='capital'){
+    showToast('GENELKURMAY','Geçersiz hedef','Kendi toprağına saldırı yapılamaz.');
+    return;
+  }
+  const atkType=ATTACK_TYPES[type]||ATTACK_TYPES.quick;
+  const cost={treasury:atkType.treasury, manpower:atkType.manpower, oil:atkType.oil, steel:atkType.steel};
+  if(G.res.treasury<cost.treasury){ showToast('MALİYE','Yetersiz hazine',`Bu saldırı için ${fmtMoney(cost.treasury)} gerekli.`); return; }
+  if(G.res.manpower<cost.manpower){ showToast('ORDU','Yetersiz insan gücü',`Bu saldırı için ${fmtNum(cost.manpower)} insan gücü gerekli.`); return; }
+  if(G.res.oil<cost.oil){ showToast('LOJİSTİK','Yetersiz petrol',`Bu saldırı için ${fmtNum(cost.oil)} petrol gerekli.`); return; }
+  if(G.res.steel<cost.steel){ showToast('SANAYİ','Yetersiz çelik',`Bu saldırı için ${fmtNum(cost.steel)} çelik gerekli.`); return; }
+  G.res.treasury-=cost.treasury;
+  G.res.manpower-=cost.manpower;
+  G.res.oil-=cost.oil;
+  G.res.steel-=cost.steel;
+  const our=estimateOurAttackPower();
+  const enemy=estimateEnemyPower(p);
+  const cityBonus=(type==='air'&&p.ind>=4)?.06:0;
+  const siegeBonus=(type==='siege'&&kind==='enemy')?.05:0;
+  const odds=clamp(our/(our+enemy)+atkType.odds+cityBonus+siegeBonus,0.08,0.92);
+  const roll=Math.random();
+  const losses=Math.round(cost.manpower*(0.45+Math.random()*0.55)*atkType.loss);
+  if(roll<odds){
+    if(!G.ownedProvs.includes(id)) G.ownedProvs.push(id);
+    G.claimedProvs=G.claimedProvs.filter(x=>x!==id);
+    G.warSupport=clamp(G.warSupport+atkType.war+3,0,100);
+    G.stability=clamp(G.stability-2,0,100);
+    G.army.morale=clamp(G.army.morale+4,0,100);
+    G.res.manpower=Math.max(0,G.res.manpower-losses);
+    addEvent('ZAFER','g',`${p.name} ele geçirildi`,`${atkType.name} başarıya ulaştı. ${p.name} Cumhuriyet kontrolüne geçti. Kayıp: ${fmtNum(losses)} asker. Başarı ihtimali %${Math.round(odds*100)} idi.`);
+    G.selectedProv=id;
+    showToast('ZAFER',`${p.name} alındı`,`${atkType.name} başarıyla tamamlandı.`);
+  }else{
+    G.warSupport=clamp(G.warSupport-4,0,100);
+    G.stability=clamp(G.stability-4,0,100);
+    G.army.morale=clamp(G.army.morale-6,0,100);
+    G.res.manpower=Math.max(0,G.res.manpower-losses);
+    addEvent('YENİLGİ','r',`${p.name} taarruzu başarısız`,`${atkType.name} durduruldu. Kayıp: ${fmtNum(losses)} asker. Başarı ihtimali %${Math.round(odds*100)} idi.`);
+    showToast('YENİLGİ',`${p.name} direndi`,`${atkType.name} başarısız oldu.`);
+  }
+  closeModal();
+  renderAll();
+}
+function resolveDecision(decId,action){
+  const dec=G.decisions.find(d=>d.id===decId);
+  if(!dec) return;
+  if(action==='fortify'){
+    if(G.res.treasury<dec.cost){ showToast('MALİYE','Yetersiz hazine!','Bu eylem için yeterli kaynak yok.'); return; }
+    G.res.treasury-=dec.cost;
+    G.stability=Math.min(100,G.stability+5);
+    G.warSupport=Math.min(100,G.warSupport+8);
+    addEvent('SAVUNMA','g','Sınır tahkim edildi','Eskişehir hattında savunma yapıları inşa edildi. Savunma kapasitesi arttı.');
+  } else if(action==='diplomacy'){
+    const af=G.diplo.relations.find(r=>r.code==='af');
+    if(af) af.rel=Math.min(-20,af.rel+15);
+    addEvent('DİPLOMASİ','','Diplomatik kanal açıldı','A. Federasyonu ile müzakere başlatıldı. Gerginlik hafif azaldı.');
+  } else {
+    addEvent('KOMUTA','','Karar ertelendi','Bekleme ve izleme politikası benimsendi.');
+  }
+  G.pendingDecision=null;
+  G.decisions=G.decisions.filter(d=>d.id!==decId);
+  closeModal();
+  renderAll();
+}
+
+// ── ARMY ──
+function renderArmy(header,tabs,body){
+  renderHeader(header,'Bakanlık 02 — Savunma','Genelkurmay Başkanlığı','Kara, Hava, Deniz kuvvetleri');
+  const st=getSubTab('army','div');
+  renderSubTabs(tabs,[['div','Tümenler'],['cmd','Komutanlar'],['train','Eğitim'],['deploy','Cephe']],'army');
+  let html='';
+  if(st==='div'||!G.activeSubTab.army){
+    html+=sectHTML('Genel Durum',''+
+      irowHTML('Toplam asker',fmtNum(G.army.totalSoldiers))+
+      irowHTML('Aktif tümen',G.army.divisions.length)+
+      irowHTML('Cephede',G.army.divisions.filter(d=>d.frontline).length+' tümen')+
+      irowHTML('Yedek kuvvet',fmtNum(G.army.reserves))+
+      irowHTML('Ordu morali',G.army.morale+'%','pos')
+    );
+    html+=sectHTML('Tümenler',G.army.divisions.map((d,i)=>`
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <span class="card-title" style="margin-bottom:0">${d.name}</span>
+          ${pill(d.status,d.frontline?'r':d.status==='Eğitimde'?'b':'g')}
+        </div>
+        ${irowHTML('Tür / Konum',d.kind+' — '+d.loc)}
+        ${irowHTML('Asker',fmtNum(d.size))}
+        ${irowHTML('Donanım',d.eq+'%')}
+        ${pbarHTML(d.eq,'thin')}
+        ${irowHTML('Tecrübe',d.exp)}
+        <div class="btn-row">
+          ${!d.frontline?btn('Cepheye Gönder',`deployDiv('${d.id}')`):''}
+          ${d.frontline?btn('Geri Çek',`retreatDiv('${d.id}')`,'ghost'):''}
+          ${btn('Donanım İkmal',`reequipDiv('${d.id}')`,d.eq>=100?'ghost':'',d.eq>=100)}
+        </div>
+      </div>`).join(''));
+  } else if(st==='cmd'){
+    html+=sectHTML('Genelkurmay — Komutanlar',''+
+      irowHTML('Aktif komutan',G.generals.length)+
+      irowHTML('Görevli komutan',G.generals.filter(g=>g.assigned).length)+
+      irowHTML('Toplam savaş deneyimi',G.generals.reduce((s,g)=>s+g.battles,0)+' muharebe')
+    );
+    html+='<div class="sect"><div class="stitle"><span>Komutan Kadrosu</span></div>';
+    html+=G.generals.map(g=>{
+      const assignedDiv=G.army.divisions.find(d=>d.id===g.assigned);
+      return `<div class="gen-card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+          <span class="gen-name">${g.name}</span>
+          ${pill(g.trait,'b')}
+        </div>
+        <div class="gen-rank">${g.rank} • ${g.battles} muharebe</div>
+        <div class="gen-stats">
+          <div class="gen-stat"><div class="sv" style="color:var(--red2)">${g.attack}</div><div class="sl2">SALDIRI</div></div>
+          <div class="gen-stat"><div class="sv" style="color:var(--blue2)">${g.defense}</div><div class="sl2">SAVUNMA</div></div>
+          <div class="gen-stat"><div class="sv" style="color:var(--green2)">${g.logistics}</div><div class="sl2">LOJİSTİK</div></div>
+        </div>
+        <div class="irow"><span class="l">Görev</span><span class="v">${assignedDiv?assignedDiv.name:'— Atanmamış —'}</span></div>
+        <div class="btn-row">${btn('Yeniden Konuşlandır',`reassignGeneral('${g.id}')`)}</div>
+      </div>`;
+    }).join('');
+    html+='</div>';
+  } else if(st==='train'){
+    html+=sectHTML('Eğitim Kuyruğu',
+      G.army.trainingQueue.length?G.army.trainingQueue.map(q=>`<div class="card">
+        <div class="card-title">${q.name}</div>
+        ${irowHTML('Hedef',fmtNum(q.size)+' asker')}
+        ${irowHTML('Kalan',q.daysLeft+' gün')}
+        ${pbarHTML((q.total-q.daysLeft)/q.total*100)}
+      </div>`).join(''):'<div style="padding:8px;font-size:11px;color:var(--inkdim)">Kuyrukta birlik yok.</div>'
+    );
+    html+=sectHTML('Yeni Birlik Yetiştir',''+
+      [
+        {n:'Piyade Tümeni',size:9000,days:30,cost:2_100_000},
+        {n:'Mekanize Tümeni',size:7200,days:42,cost:6_800_000},
+        {n:'Topçu Alayı',size:2800,days:18,cost:3_200_000},
+        {n:'Hava Filosu',size:1200,days:56,cost:14_000_000},
+      ].map((x,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;${i?'border-top:1px solid var(--line)':''}">
+        <div>
+          <div style="font-family:Cinzel,serif;font-size:12px;color:var(--ink);font-weight:600">${x.n}</div>
+          <div style="font-size:10px;color:var(--inkdim);margin-top:2px">${fmtNum(x.size)} asker • ${x.days} gün • ${fmtMoney(x.cost)}</div>
+        </div>
+        ${btn('Yetiştir',`trainDiv('${x.n}',${x.size},${x.days},${x.cost})`,'sm',G.res.treasury<x.cost)}
+      </div>`).join('')
+    );
+  } else if(st==='deploy'){
+    html+=sectHTML('Konya-Eskişehir Cephesi',''+
+      irowHTML('Konum','Batı Anadolu')+
+      irowHTML('Bizim güç','2.800 asker')+
+      irowHTML('Düşman kuvveti','~5.400 asker')+
+      irowHTML('Durum',`<span style="color:var(--red2)">Aktif Çatışma</span>`)+
+      pbarHTML(42,'red','Kontrol oranı')+
+      `<div class="btn-row">
+        ${btn('Takviye Gönder','reinforceFront()','',G.army.divisions.filter(d=>!d.frontline).length===0)}
+        ${btn('Taarruz Başlat',`showAttackModal('ek')`,'red')}
+        ${btn('Ateşkes Teklifi',`proposeCeasefire('af')`,'ghost')}
+      </div>`
+    );
+    html+=sectHTML('Lojistik',''+
+      irowHTML('Cephe hattı','14 km / 22 km')+
+      irowHTML('Yakıt','6 günlük')+
+      irowHTML('Mühimmat','<span class="v neg">3.5 günlük</span>')+
+      irowHTML('Tıbbi malzeme','9 günlük')+
+      `<div class="btn-row">${btn('İkmal Gönder','sendSupplies()','',G.res.oil<500)}</div>`
+    );
+  }
+  body.innerHTML=html;
+}
+
+function deployDiv(id){
+  const d=G.army.divisions.find(x=>x.id===id);
+  if(!d) return;
+  d.frontline=true; d.status='Cephede'; d.loc='Konya Cephesi';
+  G.warSupport=Math.min(100,G.warSupport+3);
+  showToast('ORDU',d.name+' cepheye gönderildi','Birlik Konya-Eskişehir hattına sevk edildi.');
+  renderPanel();
+}
+function retreatDiv(id){
+  const d=G.army.divisions.find(x=>x.id===id);
+  if(!d) return;
+  d.frontline=false; d.status='Hazır'; d.loc='Ankara';
+  showToast('ORDU',d.name+' geri çekildi','Birlik Ankara yedek hattına çekildi.');
+  renderPanel();
+}
+function reequipDiv(id){
+  const d=G.army.divisions.find(x=>x.id===id);
+  if(!d) return;
+  const cost=Math.round((100-d.eq)*50000);
+  if(G.res.treasury<cost){ showToast('MALİYE','Yetersiz hazine',`İkmal için ${fmtMoney(cost)} gerekli.`); return; }
+  G.res.treasury-=cost;
+  d.eq=Math.min(100,d.eq+20);
+  showToast('ORDU','İkmal tamamlandı',`${d.name} donanım oranı ${d.eq}%'ye çıktı.`);
+  renderPanel();
+}
+function trainDiv(name,size,days,cost){
+  if(!name){ showToast('ORDU','Eğitim','Bir şablon seçin.'); return; }
+  if(G.res.treasury<cost){ showToast('MALİYE','Yetersiz hazine',`Eğitim için ${fmtMoney(cost)} gerekli.`); return; }
+  G.res.treasury-=cost;
+  G.army.trainingQueue.push({id:'q'+Date.now(),name,size,daysLeft:days,total:days,cost});
+  addEvent('ORDU','g',`${name} eğitim başladı`,`${days} günde ${fmtNum(size)} askerlik birlik yetiştirilecek.`);
+  renderPanel();
+}
+function reinforceFront(){
+  const available=G.army.divisions.filter(d=>!d.frontline)[0];
+  if(!available){ showToast('ORDU','Mevcut birlik yok','Tüm birlikler görevde.'); return; }
+  deployDiv(available.id);
+}
+function sendSupplies(){
+  if(G.res.oil<500){ showToast('MALİYE','Yetersiz petrol','İkmal için en az 500 ton petrol gerekli.'); return; }
+  G.res.oil-=500;
+  G.army.morale=Math.min(100,G.army.morale+5);
+  showToast('ORDU','İkmal gönderildi','Cepheye yakıt ve malzeme sevkiyatı yapıldı. Moral arttı.');
+  renderPanel();
+}
+
+// ── INDUSTRY ──
+function renderIndustry(header,tabs,body){
+  renderHeader(header,'Bakanlık 04 — Sanayi','Üretim Bakanlığı','Fabrikalar, üretim, inşaat');
+  const st=getSubTab('ind','prod');
+  renderSubTabs(tabs,[['prod','Üretim'],['build','İnşaat'],['stock','Stok']],'ind');
+  let html='';
+  if(st==='prod'||!G.activeSubTab.ind){
+    html+=sectHTML('Fabrika Kapasitesi',''+
+      irowHTML('Askeri fabrika',G.industry.milFact)+
+      irowHTML('Sivil fabrika',G.industry.civFact)+
+      irowHTML('Rafineri',G.industry.refineries)+
+      irowHTML('Enerji santrali',G.industry.powerPlants)
+    );
+    html+=sectHTML('Aktif Üretim Hatları',
+      G.industry.prodLines.map(p=>`<div class="card">
+        <div class="card-title">${p.model}</div>
+        ${irowHTML('Tesis',p.factory)}
+        ${irowHTML('Kalan',p.daysLeft+' gün')}
+        ${irowHTML('Günlük üretim',p.perDay+' adet/gün')}
+        ${pbarHTML(p.progress,'thin')}
+        <div class="btn-row">
+          ${btn('Önceliklendir',`prioritizeProd('${p.id}')`,'')}
+          ${btn('Durdur',`stopProd('${p.id}')`, 'ghost sm')}
+        </div>
+      </div>`).join('')
+    );
+  } else if(st==='build'){
+    html+=sectHTML('İnşaat Sırası',
+      G.industry.buildQueue.length?G.industry.buildQueue.map(b=>`<div class="card">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span class="card-title" style="margin-bottom:0">${b.what}</span>
+          ${pill(b.kind)}
+        </div>
+        ${irowHTML('Konum',b.loc)}
+        ${irowHTML('Maliyet',fmtMoney(b.cost))}
+        ${irowHTML('Kalan',b.daysLeft+' gün')}
+        ${pbarHTML(b.progress,'thin')}
+        <div class="btn-row">${btn('İptal Et',`cancelBuild('${b.what}')`, 'ghost sm')}</div>
+      </div>`).join(''):'<div style="padding:8px;font-size:11px;color:var(--inkdim)">Aktif inşaat yok.</div>'
+    );
+    html+=sectHTML('Yeni İnşaat',
+      [
+        {n:'Askeri Fabrika',k:'askeri',cost:8_500_000,days:140,effect:'+2 üretim/gün'},
+        {n:'Sivil Fabrika',k:'sivil',cost:6_200_000,days:90,effect:'+₺100K/gün gelir'},
+        {n:'Rafineri',k:'enerji',cost:14_000_000,days:200,effect:'+200 petrol/gün'},
+        {n:'Hava Üssü',k:'askeri',cost:18_400_000,days:220,effect:'Hava birliği kapasitesi'},
+      ].map((x,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;${i?'border-top:1px solid var(--line)':''}">
+        <div>
+          <div style="font-family:Cinzel,serif;font-size:12px;color:var(--ink);font-weight:600">${x.n}</div>
+          <div style="font-size:10px;color:var(--inkdim);margin-top:2px">${x.days} gün • ${fmtMoney(x.cost)} • ${x.effect}</div>
+        </div>
+        ${btn('İnşa Et',`startBuild('${x.n}','${x.k}',${x.cost},${x.days})`,'sm',G.res.treasury<x.cost)}
+      </div>`).join('')
+    );
+  } else {
+    const eq=G.equipment;
+    const rows=[['Tüfek','rifles'],['Topçu','artillery'],['Tank','tanks'],['Uçak','aircraft'],['Mühimmat','ammo']];
+    html+=sectHTML('Donanım Stoku',`<table class="t"><thead><tr><th>Donanım</th><th>Stok</th><th>İhtiyaç</th><th>Üretim</th></tr></thead><tbody>
+      ${rows.map(([n,k])=>`<tr><td>${n}</td><td>${fmtNum(eq[k].stock)}</td><td>${fmtNum(eq[k].demand)}</td><td style="color:${eq[k].prodD>0?'var(--green2)':'var(--inkdim)'}">+${eq[k].prodD}/g</td></tr>`).join('')}
+    </tbody></table>`);
+  }
+  body.innerHTML=html;
+}
+
+function prioritizeProd(id){
+  const p=G.industry.prodLines.find(x=>x.id===id);
+  if(!p) return;
+  p.daysLeft=Math.max(1,p.daysLeft-3);
+  p.progress=Math.min(100,p.progress+5);
+  showToast('SANAYİ',p.model+' önceliklendirildi','Üretim hızlandırıldı. Tamamlanma süresi kısaldı.');
+  renderPanel();
+}
+function stopProd(id){
+  G.industry.prodLines=G.industry.prodLines.filter(x=>x.id!==id);
+  showToast('SANAYİ','Üretim durduruldu','Hat devre dışı bırakıldı.');
+  renderPanel();
+}
+function startBuild(name,kind,cost,days){
+  if(G.res.treasury<cost){ showToast('MALİYE','Yetersiz hazine',`${fmtMoney(cost)} gerekli.`); return; }
+  G.res.treasury-=cost;
+  G.industry.buildQueue.push({what:name,loc:'Ankara',kind,progress:0,daysLeft:days,total:days,cost});
+  addEvent('SANAYİ','g',name+' inşaatı başladı',`${days} günde tamamlanacak. Maliyet: ${fmtMoney(cost)}.`);
+  renderPanel();
+}
+function cancelBuild(name){
+  const b=G.industry.buildQueue.find(x=>x.what===name);
+  if(!b) return;
+  const refund=Math.round(b.cost*(1-b.progress/100)*.5);
+  G.res.treasury+=refund;
+  G.industry.buildQueue=G.industry.buildQueue.filter(x=>x.what!==name);
+  showToast('SANAYİ','İnşaat iptal edildi',`${fmtMoney(refund)} iade edildi.`);
+  renderPanel();
+}
+
+// ── AGRI ──
+function renderAgri(header,tabs,body){
+  renderHeader(header,'Bakanlık 07 — Tarım','Tarım & Doğal Kaynaklar','Hasat, hayvancılık, su kaynakları');
+  const a=G.agriculture;
+  body.innerHTML=`
+    ${sectHTML('Tarımsal Üretim',''+
+      irowHTML('Toplam ekili alan',fmtNum(a.farmland)+' ha')+
+      irowHTML('Verim',a.yieldPerHa+' ton/ha')+
+      irowHTML('Hayvan varlığı',fmtNum(a.livestock))+
+      slHTML('Su Rezervi',a.water+'%',a.water,'green')
+    )}
+    ${sectHTML('Mahsuller',`<table class="t"><thead><tr><th>Ürün</th><th>Alan</th><th>Üretim</th><th>Durum</th></tr></thead><tbody>
+      ${a.crops.map(c=>`<tr><td>${c.name}</td><td>${fmtNum(c.area)} ha</td><td>${fmtNum(c.prod)} t</td><td>${c.status}</td></tr>`).join('')}
+    </tbody></table>`)}
+    ${sectHTML('Gıda Bilançosu',''+
+      irowHTML('Stok',fmtNum(G.res.food)+' ton')+
+      irowHTML('Günlük üretim','+'+G.res.foodD,'pos')+
+      irowHTML('Tüketim','-720 ton/gün')+
+      irowHTML('Net','+'+(G.res.foodD-0)+' ton/gün','pos')+
+      `<div class="btn-row">
+        ${btn('Tarım Genişlet','expandFarm()',G.res.treasury<3000000?'ghost':'',G.res.treasury<3000000)}
+        ${btn('İhracat Aç','openExport()',G.res.food<10000?'ghost':'',G.res.food<10000)}
+      </div>`
+    )}`;
+}
+
+function expandFarm(){
+  if(G.res.treasury<3000000){ showToast('MALİYE','Yetersiz hazine','Tarım genişletmek için ₺3M gerekli.'); return; }
+  G.res.treasury-=3000000;
+  G.agriculture.farmland+=10000;
+  G.res.foodD+=80;
+  showToast('TARIM','Tarım arazisi genişletildi','Ekili alan 10.000 ha artırıldı. Günlük gıda üretimi +80 ton.');
+  renderPanel();
+}
+function openExport(){
+  if(G.res.food<10000){ showToast('TARIM','Yetersiz stok','İhracat için en az 10.000 ton stok gerekli.'); return; }
+  G.res.food-=5000;
+  G.res.treasury+=1500000;
+  showToast('TARIM','Gıda ihracatı yapıldı','5.000 ton gıda ihraç edildi. +₺1.5M hazineye aktarıldı.');
+  renderPanel();
+}
+
+// ── ECON ──
+function sparklineSVG(data,color='#c4954a',h=40){
+  if(!data||data.length<2) return '';
+  const mn=Math.min(...data), mx=Math.max(...data);
+  const range=mx-mn||1;
+  const w=240, pts=data.map((v,i)=>{
+    const x=(i/(data.length-1))*w;
+    const y=h-((v-mn)/range)*(h-4)-2;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const last=data[data.length-1], prev=data[data.length-2];
+  const trend=last>=prev?'▲':'▼';
+  const trendColor=last>=prev?'var(--green2)':'var(--red2)';
+  return `<div class="chart-wrap">
+    <div class="chart-title"><span>Son ${data.length} gün</span><span style="color:${trendColor}">${trend} ${fmtNum(last)}M</span></div>
+    <svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="height:${h}px">
+      <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round"/>
+      <polyline points="0,${h} ${pts} ${w},${h}" fill="${color}" fill-opacity=".08" stroke="none"/>
+    </svg>
+  </div>`;
+}
+
+function renderEcon(header,tabs,body){
+  renderHeader(header,'Bakanlık 05 — Maliye','Ekonomi & Hazine','Bütçe, vergi, dış ticaret');
+  const e=G.economy;
+  const totalIn=e.income.reduce((a,x)=>a+x.amount,0);
+  const totalOut=e.spending.reduce((a,x)=>a+x.amount,0);
+  const daily=totalIn-totalOut;
+  const sec=e.sectors||{agriculture:22,industry:38,services:40};
+  body.innerHTML=`
+    ${sectHTML('Makro Göstergeler',''+
+      irowHTML('GSYH',fmtMoney(e.gdp))+
+      irowHTML('Büyüme','+'+e.growth+'%/yıl','pos')+
+      irowHTML('Enflasyon',e.inflation+'%','neg')+
+      irowHTML('İşsizlik',(e.unemployment||9.2)+'%','neg')+
+      irowHTML('Hazine',fmtMoney(G.res.treasury))+
+      slHTML('Borç/Kapasite',fmtMoney(e.debt)+' / '+fmtMoney(e.debtCap),e.debt/e.debtCap*100,'red')
+    )}
+    ${sectHTML('Hazine Grafiği',sparklineSVG(G.history.treasury,'#c4954a',44))}
+    ${sectHTML('GDP Sektörel Dağılım',`
+      <div class="sector-bar">
+        <div class="sector-seg" style="flex:${sec.agriculture};background:#3a6020;color:#a8e070">${sec.agriculture>8?sec.agriculture+'%':''}</div>
+        <div class="sector-seg" style="flex:${sec.industry};background:#3a4a8a;color:#8ab0f0">${sec.industry>8?sec.industry+'%':''}</div>
+        <div class="sector-seg" style="flex:${sec.services};background:#6a4a20;color:#d0a060">${sec.services>8?sec.services+'%':''}</div>
+      </div>
+      <div style="display:flex;gap:12px;font-size:10px;color:var(--inkdim)">
+        <span><span style="color:#a8e070">■</span> Tarım ${sec.agriculture}%</span>
+        <span><span style="color:#8ab0f0">■</span> Sanayi ${sec.industry}%</span>
+        <span><span style="color:#d0a060">■</span> Hizmet ${sec.services}%</span>
+      </div>`)}
+    ${sectHTML('Dış Ticaret',''+
+      irowHTML('İhracat',`<span class="v pos">+${fmtMoney(e.exports||3_400_000)}/gün</span>`)+
+      irowHTML('İthalat',`<span class="v neg">-${fmtMoney(e.imports||4_600_000)}/gün</span>`)+
+      irowHTML('Ticaret Dengesi',`<span class="v ${(e.tradeBalance||0)>=0?'pos':'neg'}">${fmtD(e.tradeBalance||0)}/gün</span>`),
+      `<div class="btn-row">${btn('İhracat Arttır','boostExports()','sm',G.res.treasury<2000000)}</div>`
+    )}
+    ${sectHTML('Günlük Gelir',''+
+      e.income.map(x=>irowHTML(x.name,`<span class="v pos">+${fmtMoney(x.amount)}</span>`)).join('')+
+      `<div class="irow" style="border-top:1px solid var(--gold);margin-top:4px;padding-top:4px"><span class="l" style="font-weight:700">TOPLAM</span><span class="v pos" style="font-weight:700">+${fmtMoney(totalIn)}</span></div>`
+    )}
+    ${sectHTML('Günlük Gider',''+
+      e.spending.map(x=>irowHTML(x.name,`<span class="v neg">-${fmtMoney(x.amount)}</span>`)).join('')+
+      `<div class="irow" style="border-top:1px solid var(--red);margin-top:4px;padding-top:4px"><span class="l" style="font-weight:700">TOPLAM</span><span class="v neg" style="font-weight:700">-${fmtMoney(totalOut)}</span></div>`
+    )}
+    ${sectHTML('Vergi Politikası',`<div class="card">
+      <div class="card-title">Vergi Oranı: %${e.taxRate}</div>
+      ${pbarHTML(e.taxRate*2.5,'thin')}
+      <div style="font-size:11px;color:var(--inkdim);margin:6px 0 8px">
+        Düşük vergi → +${Math.round((25-e.taxRate)*30000).toLocaleString()} mutluluk, Yüksek vergi → +${Math.round((e.taxRate-20)*50000).toLocaleString()} gelir
+      </div>
+      <div class="btn-row">
+        ${btn('Vergiyi Düşür (-2%)','changeTax(-2)','ghost sm',e.taxRate<=10)}
+        ${btn('Vergiyi Yükselt (+2%)','changeTax(2)','sm',e.taxRate>=50)}
+      </div>
+    </div>`)}
+    ${sectHTML('Borçlanma',`<div class="btn-row">
+      ${btn('₺50M Borç Al','takeLoan(50000000)','',e.debt>=e.debtCap)}
+      ${btn('Borç Öde (₺20M)','payDebt(20000000)','ghost',G.res.treasury<20000000)}
+    </div>`)}`;
+}
+
+function changeTax(delta){
+  const e=G.economy;
+  e.taxRate=clamp(e.taxRate+delta,5,60);
+  // Update income
+  e.income[0].amount=Math.round(4200000*(e.taxRate/24));
+  G.res.treasuryD=e.income.reduce((a,x)=>a+x.amount,0)-e.spending.reduce((a,x)=>a+x.amount,0);
+  // happiness effect
+  G.happiness=clamp(G.happiness+(delta<0?2:-3),0,100);
+  showToast('MALİYE','Vergi oranı güncellendi',`Yeni oran: %${e.taxRate}. Günlük hazine değişimi: ${fmtD(G.res.treasuryD)}`);
+  renderPanel();
+}
+function takeLoan(amount){
+  if(G.economy.debt>=G.economy.debtCap){ showToast('MALİYE','Borç limiti dolu','Daha fazla borçlanamayız.'); return; }
+  G.res.treasury+=amount;
+  G.economy.debt+=amount;
+  G.economy.spending[4].amount+=Math.round(amount*0.08/365);
+  addEvent('MALİYE','','Yeni borç alındı',`${fmtMoney(amount)} borçlanıldı. Günlük faiz arttı.`);
+  renderPanel();
+}
+function payDebt(amount){
+  if(G.res.treasury<amount){ showToast('MALİYE','Yetersiz hazine',''); return; }
+  G.res.treasury-=amount;
+  G.economy.debt=Math.max(0,G.economy.debt-amount);
+  showToast('MALİYE','Borç ödendi',`${fmtMoney(amount)} borç kapatıldı.`);
+  renderPanel();
+}
+
+// ── DIPLO ──
+function renderDiplo(header,tabs,body){
+  renderHeader(header,'Bakanlık 06 — Dışişleri','Diplomatik İlişkiler','Antlaşmalar, ittifaklar');
+  body.innerHTML=`
+    ${sectHTML('Devletler',G.diplo.relations.map(r=>`<div class="card" style="padding:10px 12px">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:6px">
+        <div style="width:16px;height:12px;background:${r.color};border:1px solid var(--line);flex-shrink:0"></div>
+        <span style="font-family:Cinzel,serif;font-size:12px;color:var(--ink);font-weight:600;flex:1">${r.name}</span>
+        ${pill(r.status,r.status==='Düşman'||r.status==='Gergin'||r.status==='Soğuk'?'r':r.status==='Müttefik'?'g':'')}
+      </div>
+      ${irowHTML('İlişki puanı',`<span class="v" style="color:${r.rel>=50?'var(--green2)':r.rel<=-30?'var(--red2)':'var(--ink)'}">${r.rel>=0?'+':''}${r.rel}</span>`)}
+      ${irowHTML('Askeri güç',r.mil)}
+      <div style="font-size:10px;color:var(--inkdim);margin:4px 0 8px;font-style:italic">${r.note}</div>
+      <div class="btn-row">
+        ${btn('İlişki Geliştir',`improveRel('${r.code}')`,r.rel>=90?'ghost sm':'sm',r.rel>=90)}
+        ${r.status==='Düşman'?btn('Ateşkes Teklif Et',`proposeCeasefire('${r.code}')`):''}
+        ${r.status!=='Müttefik'&&r.status!=='Düşman'?btn('Anlaşma Öner',`proposeAgreement('${r.code}')`, 'ghost sm'):''}
+        ${r.status==='Müttefik'?btn('İttifakı Yenile',`renewAlliance('${r.code}')`,'green sm'):''}
+      </div>
+    </div>`).join(''))}
+    ${sectHTML('Aktif Antlaşmalar',`<table class="t"><thead><tr><th>Antlaşma</th><th>Taraf</th><th>Tip</th><th>Son</th></tr></thead><tbody>
+      ${G.diplo.treaties.map(t=>`<tr><td>${t.name}</td><td>${t.with}</td><td>${pill(t.kind,'b')}</td><td>${t.expires}</td></tr>`).join('')}
+    </tbody></table>`)}`;
+}
+
+function improveRel(code){
+  const r=G.diplo.relations.find(x=>x.code===code);
+  if(!r) return;
+  const cost=500000;
+  if(G.res.treasury<cost){ showToast('MALİYE','Yetersiz hazine',`Diplomatik çaba için ${fmtMoney(cost)} gerekli.`); return; }
+  G.res.treasury-=cost;
+  r.rel=Math.min(100,r.rel+8);
+  if(r.rel>=-10&&r.rel<=10) r.status='Tarafsız';
+  else if(r.rel>60) r.status='Müttefik';
+  else if(r.rel>10) r.status='Tarafsız';
+  addEvent('DİPLOMASİ','g',r.name+' ile ilişkiler gelişti',`İlişki puanı: ${r.rel>=0?'+':''}${r.rel}. Durum: ${r.status}`);
+  renderPanel();
+}
+function proposeCeasefire(code){
+  const r=G.diplo.relations.find(x=>x.code===code);
+  if(!r) return;
+  const cost=r.rel<-60?3500000:1500000;
+  if(G.res.treasury<cost){ showToast('MALİYE','Yetersiz hazine',`Ateşkes girişimi için ${fmtMoney(cost)} gerekli.`); return; }
+  G.res.treasury-=cost;
+  if(r.rel<-70){
+    // Çok kötü ilişkilerde arabulucu üzerinden kısmi ilerleme
+    r.rel=Math.min(r.rel+18,-55);
+    addEvent('DİPLOMASİ','','Arabulucu kanalı açıldı',`${r.name} ile doğrudan müzakere mümkün değil. Üçüncü taraf arabulucu devreye alındı. İlişki puanı ${r.rel>=0?'+':''}${r.rel}.`);
+    showToast('DİPLOMASİ','Arabulucu devrede',`${r.name} ile gerginlik yavaşça azalıyor.`);
+  } else if(r.rel<-40){
+    r.status='Soğuk'; r.rel=Math.min(-20,r.rel+22);
+    G.diplo.treaties.push({name:'Geçici Ateşkes',with:r.name,kind:'Ateşkes',expires:'01.01.2027'});
+    addEvent('DİPLOMASİ','g','Ateşkes imzalandı',`${r.name} ile geçici ateşkes sağlandı. Aktif çatışma durakladı.`);
+    showToast('DİPLOMASİ','Ateşkes imzalandı',`${r.name} ile geçici barış.`);
+  } else {
+    r.status='Soğuk'; r.rel=Math.min(-10,r.rel+25);
+    G.diplo.treaties.push({name:'Kalıcı Ateşkes',with:r.name,kind:'Ateşkes',expires:'31.12.2028'});
+    addEvent('DİPLOMASİ','g','Kalıcı ateşkes imzalandı',`${r.name} ile uzun vadeli ateşkes anlaşması yürürlüğe girdi.`);
+    showToast('DİPLOMASİ','Kalıcı ateşkes',`${r.name} ile çatışma resmen sona erdi.`);
+  }
+  renderPanel();
+}
+function proposeAgreement(code){
+  const r=G.diplo.relations.find(x=>x.code===code);
+  if(!r||G.res.treasury<1000000) return;
+  G.res.treasury-=1000000;
+  r.rel=Math.min(100,r.rel+15);
+  G.diplo.treaties.push({name:'İkili İşbirliği Anlaşması',with:r.name,kind:'Ticaret',expires:'01.01.2028'});
+  addEvent('DİPLOMASİ','g',r.name+' ile anlaşma imzalandı','İkili işbirliği anlaşması yürürlüğe girdi.');
+  renderPanel();
+}
+function renewAlliance(code){
+  const r=G.diplo.relations.find(x=>x.code===code);
+  if(!r) return;
+  r.rel=Math.min(100,r.rel+5);
+  const existing=G.diplo.treaties.find(t=>t.with===r.name&&t.kind==='İttifak');
+  if(existing) existing.expires='01.01.2032';
+  showToast('DİPLOMASİ','İttifak yenilendi',r.name+' ile savunma paktı uzatıldı.');
+  renderPanel();
+}
+
+// ── RESEARCH ──
+function renderResearch(header,tabs,body){
+  renderHeader(header,'Bakanlık 08 — Bilim','Araştırma & Teknoloji',`${G.research.completed.length} tamamlandı • ${G.research.active.length} aktif`);
+  const r=G.research;
+  body.innerHTML=`
+    ${sectHTML('Aktif Araştırmalar',
+      r.active.length?r.active.map(t=>`<div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <span class="card-title" style="margin-bottom:0">${t.name}</span>
+          ${pill(t.field)}
+        </div>
+        ${irowHTML('Kalan',t.daysLeft+' gün')}
+        ${irowHTML('Bonus',t.bonus)}
+        ${pbarHTML(t.progress,'thin')}
+        <div class="btn-row">${btn('Hızlandır',`boostResearch('${t.id}')`,G.res.treasury<2000000?'ghost':'',G.res.treasury<2000000)}</div>
+      </div>`).join(''):'<div style="padding:8px;font-size:11px;color:var(--inkdim)">Aktif araştırma yok.</div>',
+      `<span style="font-size:9px;color:var(--inkdim)">${r.points} puan/ay</span>`
+    )}
+    ${sectHTML('Mevcut Araştırmalar',
+      r.available.map(t=>`<div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+          <span class="card-title" style="margin-bottom:0">${t.name}</span>
+          ${pill(t.field,'b')}
+        </div>
+        ${irowHTML('Süre',t.days+' gün')}
+        ${irowHTML('Maliyet',t.cost+' araştırma puanı')}
+        ${irowHTML('Bonus',t.bonus)}
+        <div class="btn-row">${btn('Araştır',`startResearch('${t.id}')`,r.active.length>=3||r.points<t.cost?'ghost':'',r.active.length>=3||r.points<t.cost)}</div>
+      </div>`).join('')
+    )}
+    ${r.completed.length?sectHTML('Tamamlananlar',''+
+      r.completed.map(n=>`<div class="irow">${irowHTML(n,pill('✓ Tamam','g'))}</div>`).join('')
+    ):''}`;
+}
+
+function startResearch(id){
+  const t=G.research.available.find(x=>x.id===id);
+  if(!t) return;
+  if(G.research.active.length>=3){ showToast('BİLİM','3 yuva dolu','En fazla 3 eş zamanlı araştırma yapılabilir.'); return; }
+  if(G.research.points<t.cost){ showToast('BİLİM','Yetersiz puan','Yeterli araştırma puanı yok.'); return; }
+  G.research.points-=t.cost;
+  G.research.available=G.research.available.filter(x=>x.id!==id);
+  G.research.active.push({id:'r'+Date.now(),name:t.name,field:t.field,progress:0,daysLeft:t.days,bonus:t.bonus});
+  addEvent('ARAŞTIRMA','g',t.name+' araştırması başladı',`${t.days} günde tamamlanacak. ${t.bonus}`);
+  renderPanel();
+}
+function boostResearch(id){
+  const t=G.research.active.find(x=>x.id===id);
+  if(!t) return;
+  if(G.res.treasury<2000000){ showToast('MALİYE','Yetersiz hazine','Hızlandırmak için ₺2M gerekli.'); return; }
+  G.res.treasury-=2000000;
+  t.daysLeft=Math.max(1,t.daysLeft-10);
+  t.progress=Math.min(99,t.progress+15);
+  showToast('BİLİM',t.name+' hızlandırıldı','Araştırma süresi 10 gün kısaldı.');
+  renderPanel();
+}
+
+// ── INTERIOR ──
+function renderInterior(header,tabs,body){
+  renderHeader(header,'Bakanlık 10 — İçişleri','Halk & Sosyal Hizmetler','Eğitim, sağlık, asayiş');
+  const i=G.interior;
+  const sgHtml=(G.socialGroups||[]).map(g=>{
+    const color=g.satisfaction>=65?'var(--green2)':g.satisfaction>=40?'var(--gold2)':'var(--red2)';
+    return `<div class="sg-row">
+      <span class="sg-name">${g.name}</span>
+      <div class="sg-bar-wrap"><div class="sg-bar-fill" style="width:${g.satisfaction}%;background:${color}"></div></div>
+      <span class="sg-pct" style="color:${color}">${g.satisfaction}%</span>
+      <span class="sg-orient">${g.orientation}</span>
+    </div>`;
+  }).join('');
+
+  body.innerHTML=`
+    ${sectHTML('Sosyal Gruplar & Memnuniyet',sgHtml,
+      `<span style="font-size:9px;color:var(--inkdim)">Onay: ${G.approval}%</span>`
+    )}
+    ${sectHTML('Halk Göstergeleri',''+
+      irowHTML('Nüfus',fmtNum(G.population))+
+      irowHTML('Günlük artış','+'+G.populationD,'pos')+
+      irowHTML('Siyasi Sermaye',Math.round(G.politicalCapital)+' (+'+G.politicalCapitalD+'/gün)')+
+      irowHTML('Meşruiyet',Math.round(G.legitimacy)+'%')+
+      slHTML('Mutluluk',G.happiness+'%',G.happiness)+
+      slHTML('Okur-yazar',i.literacy+'%',i.literacy)+
+      slHTML('Sağlık erişimi',i.healthcare+'%',i.healthcare,'green')+
+      slHTML('Altyapı',i.infrastructure+'%',i.infrastructure)+
+      slHTML('İstihdam',i.employment+'%',i.employment,'green')
+    )}
+    ${sectHTML('Yasalar & Politikalar',
+      i.laws.map((l,idx)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;${idx?'border-top:1px solid var(--line)':''}">
+        <div>
+          <div style="font-family:Cinzel,serif;font-size:12px;color:var(--ink);font-weight:600">${l.name}</div>
+          <div style="font-size:10px;color:var(--inkdim);margin-top:2px">${l.effect}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${pill(l.active?'Aktif':'Pasif',l.active?'g':'')}
+          ${btn(l.active?'Devre Dışı':'Etkinleştir',`toggleLaw(${idx})`,l.active?'ghost sm':'sm')}
+        </div>
+      </div>`).join('')
+    )}
+    ${sectHTML('Yatırım',`<div class="btn-row">
+      ${btn('Eğitime Yatır (₺1M)',"investIn('education',1000000)",G.res.treasury<1000000?'ghost':'',G.res.treasury<1000000)}
+      ${btn('Sağlığa Yatır (₺1M)',"investIn('health',1000000)",G.res.treasury<1000000?'ghost':'',G.res.treasury<1000000)}
+      ${btn('Altyapıya Yatır (₺2M)',"investIn('infra',2000000)",G.res.treasury<2000000?'ghost':'',G.res.treasury<2000000)}
+    </div>`)}`;
+}
+
+function toggleLaw(idx){
+  const l=G.interior.laws[idx];
+  l.active=!l.active;
+  if(l.toggle==='food') G.res.foodD+=l.active?Math.round(G.res.foodD*.12):-Math.round(G.res.foodD*.12);
+  if(l.toggle==='manpower') G.res.manpowerD+=l.active?250:-250;
+  if(l.toggle==='martial'){ G.stability+=l.active?8:-8; G.res.treasuryD=Math.round(G.res.treasuryD*(l.active?.8:1.25)); }
+  showToast('İÇİŞLERİ',l.name+(l.active?' etkinleştirildi':' devre dışı'),'Politika değişikliği uygulandı. Etkiler devreye girdi.');
+  renderPanel();
+}
+function investIn(type,cost){
+  if(G.res.treasury<cost){ showToast('MALİYE','Yetersiz hazine',`${fmtMoney(cost)} gerekli.`); return; }
+  G.res.treasury-=cost;
+  const i=G.interior;
+  if(type==='education'){
+    i.literacy=Math.min(100,i.literacy+3);
+    G.research.points+=2;
+    addEvent('İÇİŞLERİ','g','Eğitim yatırımı yapıldı','Okur-yazar oranı +3, araştırma puanı +2.');
+    showToast('İÇİŞLERİ','Eğitime yatırım yapıldı','Okur-yazar oranı +3, araştırma puanı +2.');
+  } else if(type==='health'){
+    i.healthcare=Math.min(100,i.healthcare+4);
+    G.happiness=Math.min(100,G.happiness+2);
+    addEvent('İÇİŞLERİ','g','Sağlık yatırımı yapıldı','Sağlık erişimi +4, halk mutluluğu +2.');
+    showToast('İÇİŞLERİ','Sağlığa yatırım yapıldı','Sağlık erişimi +4, mutluluk +2.');
+  } else if(type==='infra'){
+    i.infrastructure=Math.min(100,i.infrastructure+5);
+    G.res.treasuryD+=50000;
+    addEvent('İÇİŞLERİ','g','Altyapı yatırımı yapıldı','Altyapı +5, günlük hazine geliri +₺50K.');
+    showToast('İÇİŞLERİ','Altyapıya yatırım yapıldı','Altyapı +5, günlük gelir +₺50K.');
+  }
+  renderAll();
+}
+
+// ── PARLIAMENT ──
+function renderParliament(header,tabs,body){
+  renderHeader(header,'Türkiye Büyük Millet Meclisi','Yasama & Siyasi Sermaye',`Koalisyon: ${G.parliament.coalition} | Muhalefet: ${G.parliament.opposition}`);
+  const pc=Math.round(G.politicalCapital);
+  const coalPct=Math.round(G.parliament.coalition/G.parliament.total*100);
+  body.innerHTML=`
+    ${sectHTML('Meclis Durumu',`
+      <div class="parl-bar">
+        <div class="parl-coalition" style="flex:${G.parliament.coalition}">Koalisyon ${G.parliament.coalition}</div>
+        <div class="parl-oppos" style="flex:${G.parliament.opposition}">Muhalefet ${G.parliament.opposition}</div>
+      </div>
+      ${irowHTML('Çoğunluk',coalPct+'% — '+(coalPct>=50?'<span class="v pos">Güvenli</span>':'<span class="v neg">Tehlikede</span>'))}
+      ${irowHTML('Siyasi Sermaye',`<span class="v" style="color:var(--purple2)">${pc} puan</span>`)}
+      ${irowHTML('Günlük kazanım',`<span class="v pos">+${G.politicalCapitalD}/gün</span>`)}
+      <div class="btn-row">
+        ${btn('Desteğe Yatır (10 PC)','investPolitical()',G.politicalCapital<10?'ghost sm':'sm',G.politicalCapital<10)}
+      </div>`)}
+    ${sectHTML('Mecliste Bekleyen Yasalar',
+      G.parliament.bills.filter(b=>b.status==='beklemede').map(b=>`
+        <div class="bill-card">
+          <div class="bill-tag">${b.tag}</div>
+          <div class="bill-name">${b.name}</div>
+          <div class="bill-effect">${b.effect}</div>
+          ${irowHTML('Gerekli Sermaye',`<span style="color:var(--purple2);font-family:'IBM Plex Mono'">${b.cost} PC</span>`)}
+          <div class="btn-row">
+            ${btn('Yasayı Geç',`passBill('${b.id}')`,pc<b.cost||G.parliament.coalition<61?'purple':'purple',pc<b.cost||G.parliament.coalition<61)}
+            ${btn('Reddet',`rejectBill('${b.id}')`, 'ghost sm')}
+          </div>
+        </div>`).join('')||'<div style="padding:8px;font-size:11px;color:var(--inkdim)">Bekleyen yasa yok.</div>'
+    )}
+    ${G.parliament.bills.filter(b=>b.status==='geçti').length?sectHTML('Geçen Yasalar',
+      G.parliament.bills.filter(b=>b.status==='geçti').map(b=>`
+        <div style="display:flex;gap:8px;align-items:center;padding:6px 0;border-top:1px solid rgba(196,149,74,.07)">
+          ${pill('✓ '+b.tag,'g')}
+          <span style="font-size:11px;color:var(--ink2)">${b.name}</span>
+        </div>`).join('')
+    ):''}`;
+}
+
+function passBill(id){
+  const b=G.parliament.bills.find(x=>x.id===id);
+  if(!b) return;
+  if(G.politicalCapital<b.cost){ showToast('MECLİS','Yetersiz siyasi sermaye',`Bu yasa için ${b.cost} PC gerekli.`); return; }
+  if(G.parliament.coalition<61){ showToast('MECLİS','Yeterli çoğunluk yok','Koalisyon en az 61 sandalye gerektiriyor.'); return; }
+  G.politicalCapital-=b.cost;
+  b.status='geçti';
+  // Yasa etkilerini uygula
+  if(b.pcEffect==='milFact') G.industry.milFact+=3;
+  if(b.pcEffect==='trade'){ G.economy.income[3].amount+=300000; G.res.treasuryD+=300000; }
+  if(b.pcEffect==='education'){ G.interior.literacy=Math.min(100,G.interior.literacy+5); G.research.pointsD+=3; }
+  if(b.pcEffect==='food') G.res.foodD+=200;
+  if(b.pcEffect==='security'){ G.stability=clamp(G.stability+6,0,100); G.happiness=clamp(G.happiness-2,0,100); }
+  addEvent('MECLİS','g',b.name+' yasası geçti',`${b.effect}. Etki hemen devreye girdi.`);
+  renderAll();
+}
+
+function rejectBill(id){
+  const b=G.parliament.bills.find(x=>x.id===id);
+  if(!b) return;
+  b.status='reddedildi';
+  G.parliament.opposition=Math.min(G.parliament.total-40,G.parliament.opposition+2);
+  G.parliament.coalition=G.parliament.total-G.parliament.opposition;
+  addEvent('MECLİS','','Yasa reddedildi',`${b.name} mecliste kabul görmedi. Muhalefet güçlendi.`);
+  renderPanel();
+}
+
+function investPolitical(){
+  if(G.politicalCapital<10){ showToast('SİYASET','Yetersiz sermaye','En az 10 PC gerekli.'); return; }
+  G.politicalCapital-=10;
+  G.parliament.coalition=Math.min(G.parliament.total-30, G.parliament.coalition+4);
+  G.parliament.opposition=G.parliament.total-G.parliament.coalition;
+  showToast('MECLİS','Koalisyon güçlendi','10 PC harcandı. Koalisyon +4 sandalye kazandı.');
+  renderPanel();
+}
+
+function reassignGeneral(genId){
+  const gen=G.generals.find(g=>g.id===genId);
+  if(!gen) return;
+  const available=G.army.divisions.filter(d=>!G.generals.some(g=>g.id!==genId&&g.assigned===d.id));
+  if(!available.length){ showToast('GENELKURMAY','Uygun birlik yok','Tüm birlikler komutanla görevde.'); return; }
+  const div=available[0];
+  gen.assigned=div.id;
+  showToast('GENELKURMAY','Komutan atandı',`${gen.name} → ${div.name}`);
+  renderPanel();
+}
+
+function boostExports(){
+  if(G.res.treasury<2000000){ showToast('MALİYE','Yetersiz hazine','İhracatı artırmak için ₺2M gerekli.'); return; }
+  G.res.treasury-=2000000;
+  G.economy.exports+=200000;
+  G.economy.tradeBalance=(G.economy.exports||0)-(G.economy.imports||0);
+  addEvent('EKONOMİ','g','İhracat teşvik paketi uygulandı','Dışarıya satışlar +₺200K/gün artırıldı.');
+  renderPanel();
+}
+
+// ── EVENTS ──
+function renderEvents(header,tabs,body){
+  renderHeader(header,'Cumhurbaşkanlığı Bülteni','Haber & Olaylar','Devletten halka, dünyadan saraya');
+  G.events.forEach(e=>e.read=true);
+  updateEventBadge();
+  body.innerHTML=sectHTML('Tüm Olaylar',
+    G.events.map(e=>`<div class="card" style="padding:10px 12px;margin-bottom:6px">
+      <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:4px">
+        ${pill(e.tag,e.kind==='r'?'r':e.kind==='g'?'g':'')}
+        <span style="font-size:9px;color:var(--inkdim)">${e.date||'Bilinmiyor'}</span>
+      </div>
+      <div style="font-family:Cinzel,serif;font-size:13px;color:var(--ink);font-weight:600;margin-bottom:3px">${e.title}</div>
+      <div style="font-size:11px;color:var(--ink2);line-height:1.6">${e.body}</div>
+    </div>`).join(''),
+    `<span style="font-size:9px;color:var(--inkdim)">${G.events.length} kayıt</span>`
+  );
+}
+
+// ── TICKER ──
+function renderTicker(){
+  const items=[...G.events.slice(0,6),...G.events.slice(0,6)];
+  document.getElementById('ticker-inner').innerHTML=items.map(e=>
+    `<div class="tick-item"><span class="tick-tag ${e.kind==='r'?'r':e.kind==='g'?'g':''}">${e.tag}</span><span>${e.title}</span></div>`
+  ).join('');
+}
+
+// ── MODAL ──
+function showDecisionModal(decId){
+  const dec=G.decisions.find(d=>d.id===decId);
+  if(!dec) return;
+  document.getElementById('modal-content').innerHTML=`
+    <div class="modal-tag">⚠ ACİL KARAR GEREKLİ</div>
+    <div class="modal-title">${dec.title}</div>
+    <div class="modal-body">${dec.body}${dec.cost?`<br/><br/><strong style="color:var(--gold2)">Maliyet: ${fmtMoney(dec.cost)}</strong>`:''}
+    </div>
+    <div class="modal-actions">
+      ${dec.choices.map(c=>`<button class="btn ${c.style}" onclick="resolveDecision('${dec.id}','${c.action}')">${c.label}</button>`).join('')}
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+}
+function closeModal(){ document.getElementById('modal').style.display='none'; }
+document.getElementById('modal').addEventListener('click',e=>{ if(e.target===document.getElementById('modal')) closeModal(); });
+
+// ── TOAST ──
+let toastTimer=null;
+function showToast(tag,title,body){
+  const el=document.getElementById('toast');
+  el.innerHTML=`<div class="ev-tag">${tag}</div><div class="ev-title">${title}</div>${body?`<div class="ev-body">${body}</div>`:''}
+    <div class="btn-row"><button class="btn ghost sm" onclick="document.getElementById('toast').style.display='none'">Kapat</button></div>`;
+  el.style.display='block';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.style.display='none',6000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KAYIT / YÜKLEME
+// ═══════════════════════════════════════════════════════════════
+
+function saveGame(){
+  try {
+    const data=JSON.parse(JSON.stringify(G));
+    data.date=G.date.toISOString();
+    data.tickInterval=null;
+    data.speed=0;
+    localStorage.setItem('cumhuriyet_v1_save',JSON.stringify(data));
+    localStorage.setItem('cumhuriyet_v1_ts',new Date().toISOString());
+    // Kısa kayıt göstergesi
+    const spd=document.getElementById('tb-speed');
+    if(spd){ const orig=spd.textContent; spd.textContent='💾 Kaydedildi'; setTimeout(()=>spd.textContent=orig,1400); }
+  } catch(err){}
+}
+
+function tryLoadSave(){
+  try {
+    const raw=localStorage.getItem('cumhuriyet_v1_save');
+    if(!raw) return null;
+    const data=JSON.parse(raw);
+    data.date=new Date(data.date);
+    data.tickInterval=null;
+    data.speed=0;
+    return data;
+  } catch(err){ return null; }
+}
+
+// nsStart'ı kayıt kontrolüyle güncelle
+const _origNsStart=nsStart;
+// (nsStart zaten tanımlı, aşağıda override edildi)
+// Kayıt kontrolü nsStart içinde yapılıyor - aşağıya alındı.
+
+// ═══════════════════════════════════════════════════════════════
+// KLAVYE KISAYOLLARI
+// ═══════════════════════════════════════════════════════════════
+
+document.addEventListener('keydown', e=>{
+  if(!G) return;
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+
+  switch(e.key){
+    case ' ':
+      e.preventDefault();
+      setSpeed(G.speed===0 ? 1 : 0);
+      break;
+    case '0': setSpeed(0); break;
+    case '1': setSpeed(1); break;
+    case '2': setSpeed(2); break;
+    case '3': setSpeed(3); break;
+    case 'Escape':
+      if(document.getElementById('modal').style.display!=='none') closeModal();
+      else if(document.getElementById('toast').style.display!=='none') document.getElementById('toast').style.display='none';
+      else if(G.selectedProv){ G.selectedProv=null; renderPanel(); }
+      break;
+    case 'h': case 'H': setTab('hq'); break;
+    case 'a': case 'A': setTab('army'); break;
+    case 'i': case 'I': setTab('industry'); break;
+    case 'g': case 'G': setTab('agri'); break;
+    case 'e': case 'E': setTab('econ'); break;
+    case 'd': case 'D': setTab('diplo'); break;
+    case 'r': case 'R': setTab('research'); break;
+    case 'c': case 'C': setTab('interior'); break;
+    case 'p': case 'P': setTab('parliament'); break;
+    case 'n': case 'N': setTab('events'); break;
+    case 'm': case 'M': {
+      const modes=['political','fronts','econ'];
+      const idx=modes.indexOf(G.mapMode);
+      setMapMode(modes[(idx+1)%3]);
+      break;
+    }
+    case '+': case '=': mapZoom(0.7); break;
+    case '-': mapZoom(1.4); break;
+    case 'f': case 'F': mapReset(); break;
+    case 'w': case 'W': mapWorld(); break;
+    case 's': case 'S': saveGame(); break;
+    case '?': showShortcutsHelp(); break;
+  }
+});
+
+// ── KLAVYE KISAYOLLARI YARDIM MODALI ──
+function showShortcutsHelp(){
+  document.getElementById('modal-content').innerHTML=`
+    <div class="modal-tag">⌨ KLAVYE KISAYOLLARI</div>
+    <div class="modal-title">Hızlı Erişim Rehberi</div>
+    <div class="modal-body" style="display:grid;grid-template-columns:1fr 1fr;gap:16px 24px">
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:.18em;color:var(--gold2);margin-bottom:6px">ZAMAN KONTROLü</div>
+        <div style="font-size:11px;color:var(--ink2);line-height:2">
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">Boşluk</kbd> Oynat / Duraklat<br/>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">0</kbd> Duraklat<br/>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">1</kbd>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">2</kbd>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">3</kbd> Hız seç
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:.18em;color:var(--gold2);margin-bottom:6px">SEKMELER</div>
+        <div style="font-size:11px;color:var(--ink2);line-height:2">
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">H</kbd> Komuta &nbsp;
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">A</kbd> Ordu<br/>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">I</kbd> Sanayi &nbsp;
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">G</kbd> Tarım<br/>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">E</kbd> Maliye &nbsp;
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">D</kbd> Dışişleri<br/>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">R</kbd> Bilim &nbsp;
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">C</kbd> İçişleri<br/>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">P</kbd> Meclis<br/>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">N</kbd> Haberler
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:.18em;color:var(--gold2);margin-bottom:6px">HARİTA</div>
+        <div style="font-size:11px;color:var(--ink2);line-height:2">
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">M</kbd> Mod değiştir<br/>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">+</kbd>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">-</kbd> Yakınlaştır/Uzaklaştır<br/>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">F</kbd> Türkiye'ye odaklan<br/>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">W</kbd> Dünya görünümü
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:.18em;color:var(--gold2);margin-bottom:6px">DİĞER</div>
+        <div style="font-size:11px;color:var(--ink2);line-height:2">
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">S</kbd> Oyunu kaydet<br/>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">Esc</kbd> Kapat / Geri<br/>
+          <kbd style="background:var(--bg2);border:1px solid var(--golddim);padding:1px 5px;font-family:'IBM Plex Mono';font-size:10px">?</kbd> Bu yardım penceresi
+        </div>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Kapat</button>
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+}
+
+// ── KAYIT YÜKLEME — Ad ekranı entegrasyonu ──
+// nsStart fonksiyonunu kayıt kontrolüyle genişlet
+(function(){
+  const _orig=window.nsStart;
+  window.nsStart=function(){
+    const nameEl=document.getElementById('presname');
+    const name=nameEl.value.trim();
+    if(name.length<2){ nameEl.style.borderBottomColor='var(--red)'; return; }
+    const save=tryLoadSave();
+    if(save&&save.president===name){
+      const ts=localStorage.getItem('cumhuriyet_v1_ts');
+      const tsStr=ts?new Date(ts).toLocaleString('tr-TR'):'bilinmiyor';
+      if(confirm(`"${name}" adlı kayıtlı oyun bulundu.\nKayıt tarihi: ${tsStr}\n\nDevam etmek istiyor musunuz?\n(İptal = Yeni oyun başlat)`)){
+        document.getElementById('namescreen').style.display='none';
+        document.getElementById('app').style.display='';
+        G=save;
+        document.getElementById('tb-leader').textContent='Cumhurbaşkanı '+G.president;
+        initMap();
+        renderAll();
+        showToast('KAYIT','Oyun yüklendi',`${tsStr} tarihli kayıt devam ettiriliyor.`);
+        return;
+      }
+    }
+    _orig();
+  };
+})();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
