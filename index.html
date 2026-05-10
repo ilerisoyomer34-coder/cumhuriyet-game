@@ -241,6 +241,26 @@ table.t tr:hover td{background:rgba(196,149,74,.04);color:var(--ink)}
 .min-eff-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--golddim),var(--gold2));transition:width .4s}
 .min-eff-num{font-family:'IBM Plex Mono';font-size:10px;color:var(--ink2);flex-shrink:0}
 
+/* ── SEÇİM KARTLARI ── */
+.elec-card{background:var(--bg2);border:1px solid var(--line);border-top:2px solid var(--purple);padding:10px 12px;margin-bottom:8px}
+.elec-role{font-family:'Bebas Neue';font-size:10px;letter-spacing:.16em;color:var(--purple2);margin-bottom:4px}
+.elec-title{font-family:'Cinzel';font-size:13px;color:var(--ink);font-weight:700;margin-bottom:8px}
+.elec-timer{font-size:10px;color:var(--inkdim);font-family:'IBM Plex Mono';margin-bottom:8px}
+.elec-cands{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.elec-cand{padding:7px 10px;background:var(--bg);border:1px solid var(--line);cursor:pointer;transition:border-color .15s;position:relative}
+.elec-cand:hover{border-color:var(--golddim)}
+.elec-cand.chosen{border-color:var(--purple);background:rgba(106,58,154,.12)}
+.elec-cand.winner-cand{border-color:var(--gold);background:rgba(196,149,74,.1)}
+.elec-cand-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.elec-cand-name{font-family:'Cinzel';font-size:11px;font-weight:700;color:var(--ink)}
+.elec-cand-pct{font-family:'IBM Plex Mono';font-size:12px;font-weight:700;color:var(--purple2)}
+.elec-cand-pct.leading{color:var(--gold)}
+.elec-cand-info{display:flex;gap:8px;font-size:9px;color:var(--inkdim);margin-bottom:5px}
+.elec-poll-bar{height:5px;background:var(--bg1);border-radius:3px;overflow:hidden}
+.elec-poll-fill{height:100%;background:var(--purple2);border-radius:3px;transition:width .5s}
+.elec-poll-fill.leading{background:var(--gold)}
+.elec-poll-fill.chosen{background:var(--green2)}
+
 /* ── YENİ: SOSYAL GRUPLAR ── */
 .sg-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid rgba(196,149,74,.07);font-size:11px}
 .sg-row:first-child{border-top:0}
@@ -717,6 +737,7 @@ function makeInitialState(presidentName){
       ]},
     ],
     pendingDecision: 'dec1',
+    elections: [],
 
     mapMode:'political',
     activeTab:'hq',
@@ -1110,6 +1131,14 @@ function gameTick(){
   // Auto-save her 7 günde bir
   if(G.date.getDay()===0) saveGame();
 
+  // Seçim geri sayımı
+  if(G.elections){
+    G.elections.filter(e=>e.status==='active').forEach(e=>{
+      e.daysLeft--;
+      if(e.daysLeft<=0) resolveElection(e.id);
+    });
+  }
+
   renderAll();
 }
 
@@ -1323,15 +1352,23 @@ function renderHQ(header,tabs,body){
 
     <!-- Kabine Bakanları -->
     ${sectHTML('Kabine', `<div class="minister-grid">
-      ${(G.ministers||[]).map(m=>`<div class="min-card">
-        <div class="min-role">${m.role}</div>
-        <div class="min-name">${m.name}</div>
-        <div class="min-eff">
-          <div class="min-eff-bar"><i style="width:${m.eff}%"></i></div>
-          <span class="min-eff-num">${m.eff}%</span>
-          ${pill(m.trait,'b')}
-        </div>
-      </div>`).join('')}
+      ${(G.ministers||[]).map(m=>{
+        const hasElec=(G.elections||[]).find(e=>e.mid===m.id&&e.status==='active');
+        return `<div class="min-card">
+          <div class="min-role">${m.role}</div>
+          <div class="min-name">${m.name}</div>
+          <div class="min-eff">
+            <div class="min-eff-bar"><i style="width:${m.eff}%"></i></div>
+            <span class="min-eff-num">${m.eff}%</span>
+            ${pill(m.trait,'b')}
+          </div>
+          <div style="margin-top:5px">
+            ${hasElec
+              ? `<button class="btn ghost sm" onclick="setTab('parliament')" style="font-size:9px;padding:2px 7px;color:var(--purple2)">🗳 Seçim Sürüyor</button>`
+              : `<button class="btn sm" onclick="startMinisterElection('${m.id}')" style="font-size:9px;padding:2px 7px">Seçim Başlat</button>`}
+          </div>
+        </div>`;
+      }).join('')}
     </div>`)}
 
     <!-- Aktif Krizler -->
@@ -2184,6 +2221,36 @@ function renderParliament(header,tabs,body){
       <div class="btn-row">
         ${btn('Desteğe Yatır (10 PC)','investPolitical()',G.politicalCapital<10?'ghost sm':'sm',G.politicalCapital<10)}
       </div>`)}
+    ${sectHTML('Bakan Seçimleri',`
+      ${(G.elections||[]).length===0?'<div style="font-size:11px;color:var(--inkdim);padding:6px 0">Aktif seçim yok. Bakan kartından seçim başlatın.</div>':''}
+      ${(G.elections||[]).map(e=>{
+        const isActive=e.status==='active';
+        const leading=isActive?e.cands.reduce((a,b)=>b.publicPct>a.publicPct?b:a):e.cands[e.winner];
+        return `<div class="elec-card">
+          <div class="elec-role">${e.role}</div>
+          <div class="elec-title">${isActive?'🗳 Kamuoyu Yoklaması':'✅ Seçim Sonucu'}</div>
+          ${isActive?`<div class="elec-timer">⏱ ${e.daysLeft} gün kaldı${e.playerChoice!==null?' · Oy kullandınız':' · <b style="color:var(--gold2)">Oy kullanmadınız!</b>'}</div>`
+          :`<div class="elec-timer">Kazanan: <b style="color:var(--gold2)">${leading.name}</b> · %${leading.final} oy</div>`}
+          <div class="elec-cands">${e.cands.map((c,i)=>{
+            const isChosen=e.playerChoice===i;
+            const isWinner=!isActive&&e.winner===i;
+            const pct=isActive?c.publicPct:c.final;
+            const isLeading=isActive&&pct===Math.max(...e.cands.map(x=>x.publicPct));
+            return `<div class="elec-cand${isChosen?' chosen':''}${isWinner?' winner-cand':''}" ${isActive&&e.playerChoice===null?`onclick="playerVote('${e.id}',${i})"`:''}>
+              <div class="elec-cand-top">
+                <span class="elec-cand-name">${c.name}${isChosen?' ★':isWinner?' 🏆':''}</span>
+                <span class="elec-cand-pct${isLeading||isWinner?' leading':''}">${pct}%</span>
+              </div>
+              <div class="elec-cand-info">
+                <span>${c.party}</span><span>·</span><span>${c.trait}</span><span>·</span><span>Etkinlik %${c.eff}</span>
+              </div>
+              <div class="elec-poll-bar"><div class="elec-poll-fill${isChosen?' chosen':isLeading||isWinner?' leading':''}" style="width:${pct}%"></div></div>
+            </div>`;
+          }).join('')}</div>
+          ${isActive&&e.playerChoice===null?`<div style="font-size:10px;color:var(--gold2);text-align:center;padding:4px">Adaya tıklayarak desteğinizi verin</div>`:''}
+        </div>`;
+      }).join('')}
+    `)}
     ${sectHTML('Mecliste Bekleyen Yasalar',
       G.parliament.bills.filter(b=>b.status==='beklemede').map(b=>`
         <div class="bill-card">
@@ -2260,6 +2327,89 @@ function boostExports(){
   G.economy.tradeBalance=(G.economy.exports||0)-(G.economy.imports||0);
   addEvent('EKONOMİ','g','İhracat teşvik paketi uygulandı','Dışarıya satışlar +₺200K/gün artırıldı.');
   renderPanel();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BAKAN SEÇİMİ
+// ═══════════════════════════════════════════════════════════════
+
+const CAND_NAMES=['Ahmet Yılmaz','Fatma Çelik','Mehmet Kara','Ayşe Demir','Ali Şahin',
+  'Zeynep Arslan','Mustafa Öztürk','Hatice Aydın','Hasan Kılıç','Emine Doğan',
+  'İbrahim Kurt','Mediha Şen','Osman Yıldız','Elif Güneş','Yusuf Akın',
+  'Serkan Bozkurt','Kemal Çakır','Nilüfer Erdoğan','Bülent Özcan','Seda Polat',
+  'Murat Tekin','Gülsüm Avcı','Tarık Bostan','Nermin Karahan','Orhan Biçer'];
+const CAND_TRAITS=['Militarist','Ekonomist','Diplomat','Düzenleyici','Üretimci','Çiftçi Dostu','Reformcu','Teknokrat','Milliyetçi'];
+const CAND_PARTIES=['Cumhuriyet Cephesi','Milli Hareket','Liberal Birlik','Sosyal Demokratlar','Bağımsız'];
+
+function genCandidate(){
+  return{
+    name:CAND_NAMES[Math.floor(Math.random()*CAND_NAMES.length)],
+    trait:CAND_TRAITS[Math.floor(Math.random()*CAND_TRAITS.length)],
+    party:CAND_PARTIES[Math.floor(Math.random()*CAND_PARTIES.length)],
+    eff:48+Math.floor(Math.random()*42),
+    basePop:15+Math.floor(Math.random()*45),
+    publicPct:0
+  };
+}
+
+function startMinisterElection(mid){
+  if(!G.elections) G.elections=[];
+  if(G.elections.find(e=>e.mid===mid&&e.status==='active')){
+    showToast('SEÇİM','Aktif seçim var','Bu bakanlık için seçim süreci devam ediyor.'); return;
+  }
+  const minister=G.ministers.find(m=>m.id===mid);
+  if(!minister) return;
+  const cands=[genCandidate(),genCandidate(),genCandidate()];
+  // Normalize public pct
+  const tot=cands.reduce((s,c)=>s+c.basePop,0);
+  cands.forEach(c=>c.publicPct=Math.round(c.basePop/tot*100));
+  G.elections.push({
+    id:'e_'+Date.now(), mid, role:minister.role,
+    cands, playerChoice:null, status:'active', daysLeft:5
+  });
+  addEvent('SEÇİM','g',`${minister.role} için seçim başladı`,`3 aday yarışıyor. 5 günlük kamuoyu yoklaması başladı. Desteğinizi verin!`);
+  setTab('parliament');
+  renderAll();
+}
+
+function playerVote(elecId,idx){
+  const e=G.elections.find(x=>x.id===elecId);
+  if(!e||e.status!=='active') return;
+  if(e.playerChoice!==null){showToast('SEÇİM','Zaten oy kullandınız','Bu seçimde oyunuzu verdiniz.');return;}
+  e.playerChoice=idx;
+  // Cumhurbaşkanlığı desteği oranında oy kaydırma
+  const boost=Math.round(G.approval*0.20);
+  e.cands.forEach((c,i)=>{
+    c.publicPct=Math.max(3, i===idx ? c.publicPct+boost : c.publicPct-Math.round(boost/(e.cands.length-1)));
+  });
+  const tot=e.cands.reduce((s,c)=>s+c.publicPct,0);
+  e.cands.forEach(c=>c.publicPct=Math.round(c.publicPct/tot*100));
+  showToast('SEÇİM','Destek verildi',`${e.cands[idx].name} adayına cumhurbaşkanlığı desteği açıklandı!`);
+  renderAll();
+}
+
+function resolveElection(elecId){
+  const e=G.elections.find(x=>x.id===elecId);
+  if(!e||e.status!=='active') return;
+  // Final sonuç: kamuoyu + rastlantı
+  const finals=e.cands.map(c=>({...c, final:Math.max(1,c.publicPct+Math.floor(Math.random()*12)-6)}));
+  const tot=finals.reduce((s,c)=>s+c.final,0);
+  finals.forEach(c=>c.final=Math.round(c.final/tot*100));
+  e.cands=finals;
+  const winner=finals.reduce((a,b)=>b.final>a.final?b:a);
+  const winIdx=finals.indexOf(winner);
+  e.winner=winIdx; e.status='resolved';
+  // Bakana ata
+  const minister=G.ministers.find(m=>m.id===e.mid);
+  if(minister){
+    const old=minister.name;
+    minister.name=winner.name; minister.eff=winner.eff; minister.trait=winner.trait;
+    addEvent('SEÇİM','g',`${winner.name} ${e.role} seçildi`,
+      `%${winner.final} oyla seçimi kazandı. ${old} görevi devretti. Bakanlık etkinliği: %${winner.eff}`);
+  }
+  if(e.playerChoice===winIdx){G.approval=clamp(G.approval+3,0,100);G.politicalCapital=Math.min(100,G.politicalCapital+6);}
+  else if(e.playerChoice!==null){G.approval=clamp(G.approval-2,0,100);}
+  renderAll();
 }
 
 // ── EVENTS ──
