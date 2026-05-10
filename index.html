@@ -744,9 +744,12 @@ function nsStart(){
   document.getElementById('app').style.display='';
   G = makeInitialState(name);
   document.getElementById('tb-leader').textContent = 'Cumhurbaşkanı '+name;
-  initMap();
-  renderAll();
-  setTimeout(()=>showDecisionModal('dec1'),1200);
+  // Wait one frame so #app layout is computed before Leaflet init
+  requestAnimationFrame(()=>{
+    initMap();
+    renderAll();
+    setTimeout(()=>showDecisionModal('dec1'),1200);
+  });
 }
 document.getElementById('presname').addEventListener('keydown',e=>{ if(e.key==='Enter') nsStart(); });
 
@@ -852,14 +855,21 @@ let leafletMap=null, provGeoLayer=null;
 
 const GEO_URL='https://cdn.jsdelivr.net/gh/cihadturhan/tr-geojson@master/geo/tr-cities-utf8.json';
 
+// GeoJSON name aliases (GeoJSON uses short names)
+const GEO_ALIASES={'Afyon':'Afyonkarahisar','Hakkari':'Hakkâri'};
+
 function initMap(){
   leafletMap=L.map('leaflet-map',{center:[39,35.5],zoom:6,zoomControl:false,attributionControl:false});
   L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18,subdomains:'abcd'}).addTo(leafletMap);
+  // invalidateSize after layout paint so Leaflet knows real dimensions
+  setTimeout(()=>leafletMap.invalidateSize(),100);
   fetch(GEO_URL).then(r=>r.json()).then(data=>{
     provGeoLayer=L.geoJSON(data,{
       style:f=>provStyle(f),
       onEachFeature:(f,layer)=>{
-        const prov=PROV_BY_NAME[f.properties.name];
+        const rawName=f.properties.name;
+        const name=GEO_ALIASES[rawName]||rawName;
+        const prov=PROV_BY_NAME[name];
         if(!prov) return;
         layer.on('mouseover',e=>showProvTip(prov,e.originalEvent));
         layer.on('mouseout',()=>hideProvTip());
@@ -870,7 +880,8 @@ function initMap(){
 }
 
 function provStyle(f){
-  const prov=PROV_BY_NAME[f.properties.name];
+  const rawName=f.properties.name;
+  const prov=PROV_BY_NAME[GEO_ALIASES[rawName]||rawName];
   if(!prov||!G) return {fillColor:'#1e1a14',color:'#0a0806',weight:0.5,fillOpacity:0.55};
   const kind=getProvKind(prov.id);
   const sel=G.selectedProv===prov.id;
@@ -2457,9 +2468,11 @@ function showShortcutsHelp(){
         document.getElementById('app').style.display='';
         G=save;
         document.getElementById('tb-leader').textContent='Cumhurbaşkanı '+G.president;
-        initMap();
-        renderAll();
-        showToast('KAYIT','Oyun yüklendi',`${tsStr} tarihli kayıt devam ettiriliyor.`);
+        requestAnimationFrame(()=>{
+          initMap();
+          renderAll();
+          showToast('KAYIT','Oyun yüklendi',`${tsStr} tarihli kayıt devam ettiriliyor.`);
+        });
         return;
       }
     }
