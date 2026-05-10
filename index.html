@@ -2135,6 +2135,11 @@ function renderDiplo(header,tabs,body){
         <div style="width:16px;height:12px;background:${r.color};border:1px solid var(--line);flex-shrink:0"></div>
         <span style="font-family:Cinzel,serif;font-size:12px;color:var(--ink);font-weight:600;flex:1">${r.name}</span>
         ${pill(r.status,r.status==='Düşman'||r.status==='Gergin'||r.status==='Soğuk'?'r':r.status==='Müttefik'?'g':'')}
+        ${G.wars.find(w=>w.code===r.code&&w.status==='active')
+          ?`<button class="btn red sm" style="padding:2px 7px;font-size:9px" onclick="setTab('war')">⚔ Savaşta</button>`
+          :r.status!=='Müttefik'
+            ?`<button class="btn red sm" style="padding:2px 7px;font-size:9px" onclick="confirmDeclareWar('${r.code}')">⚔ Savaş</button>`
+            :''}
       </div>
       ${irowHTML('İlişki puanı',`<span class="v" style="color:${r.rel>=50?'var(--green2)':r.rel<=-30?'var(--red2)':'var(--ink)'}">${r.rel>=0?'+':''}${r.rel}</span>`)}
       ${irowHTML('Askeri güç',r.mil)}
@@ -2144,8 +2149,6 @@ function renderDiplo(header,tabs,body){
         ${r.status==='Düşman'?btn('Ateşkes Teklif Et',`proposeCeasefire('${r.code}')`):''}
         ${r.status!=='Müttefik'&&r.status!=='Düşman'?btn('Anlaşma Öner',`proposeAgreement('${r.code}')`, 'ghost sm'):''}
         ${r.status==='Müttefik'?btn('İttifakı Yenile',`renewAlliance('${r.code}')`,'green sm'):''}
-        ${r.status!=='Müttefik'&&!G.wars.find(w=>w.code===r.code&&w.status==='active')?btn('⚔ Savaş İlan Et',`confirmDeclareWar('${r.code}')`, 'red sm'):''}
-        ${G.wars.find(w=>w.code===r.code&&w.status==='active')?`<button class="btn red sm" onclick="setTab('war')">⚔ Savaş Sürüyor →</button>`:''}
       </div>
     </div>`).join(''))}
     ${sectHTML('Aktif Antlaşmalar',`<table class="t"><thead><tr><th>Antlaşma</th><th>Taraf</th><th>Tip</th><th>Son</th></tr></thead><tbody>
