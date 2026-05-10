@@ -74,7 +74,8 @@ button:active{transform:scale(.97)}
 .leaflet-container{background:#060b14}
 .leaflet-tile-pane{opacity:.92}
 .maptools{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:6px;z-index:1000}
-.prov-label{background:transparent;border:none;box-shadow:none;font-family:'Cinzel',serif;font-size:10px;font-weight:600;color:#e2d4b8;text-shadow:0 1px 3px rgba(0,0,0,.9),0 0 6px rgba(0,0,0,.7);white-space:nowrap;pointer-events:none;transform:translate(-50%,-50%)}
+.prov-label.leaflet-tooltip{background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;font-family:'Cinzel',serif;font-size:10px;font-weight:600;color:#e2d4b8;text-shadow:0 1px 4px #000,0 0 8px #000;white-space:nowrap;pointer-events:none}
+.prov-label.leaflet-tooltip::before{display:none!important}
 .mapbtn{background:rgba(14,11,7,.88);border:1px solid var(--line);color:var(--inkdim);padding:6px 12px;font-family:'Bebas Neue';font-size:12px;letter-spacing:.12em;transition:all .15s;backdrop-filter:blur(6px)}
 .mapbtn:hover,.mapbtn.active{color:var(--gold2);border-color:var(--golddim);background:rgba(196,149,74,.1)}
 .mapmode-row{display:flex;gap:0}
@@ -875,13 +876,8 @@ function initMap(){
         layer.on('mouseover',e=>showProvTip(prov,e.originalEvent));
         layer.on('mouseout',()=>hideProvTip());
         layer.on('click',()=>clickProv(prov));
-        // Province name label
-        const center=layer.getBounds().getCenter();
-        L.marker(center,{
-          icon:L.divIcon({className:'prov-label',html:name,iconSize:[0,0]}),
-          interactive:false,
-          zIndexOffset:100
-        }).addTo(leafletMap);
+        // Permanent province label in tooltipPane (z:650, above tiles)
+        layer.bindTooltip(name,{permanent:true,direction:'center',className:'prov-label',sticky:false,opacity:1});
       }
     }).addTo(leafletMap);
   }).catch(()=>{});
