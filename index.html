@@ -860,7 +860,7 @@ const GEO_ALIASES={'Afyon':'Afyonkarahisar','Hakkari':'Hakkâri'};
 
 function initMap(){
   leafletMap=L.map('leaflet-map',{center:[39,35.5],zoom:6,zoomControl:false,attributionControl:false});
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18,subdomains:'abcd'}).addTo(leafletMap);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{maxZoom:18,subdomains:'abcd'}).addTo(leafletMap);
   // invalidateSize after layout paint so Leaflet knows real dimensions
   setTimeout(()=>leafletMap.invalidateSize(),100);
   fetch(GEO_URL).then(r=>r.json()).then(data=>{
