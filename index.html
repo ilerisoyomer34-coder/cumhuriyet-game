@@ -120,6 +120,8 @@ button:active{transform:scale(.97)}
 .btn.red:hover{background:linear-gradient(180deg,#6a2828,#3a1515);box-shadow:0 0 10px rgba(196,58,63,.2)}
 .btn.green{background:linear-gradient(180deg,#2a4a18,#162810);border-color:#3a6020;border-top-color:var(--green2);color:#a8e070}
 .btn.ghost{background:transparent;border-color:var(--line);color:var(--ink2)}
+.btn.blue{background:linear-gradient(180deg,#1a3050,#0e1c30);border-color:#2a5080;border-top-color:var(--blue2);color:#a0d0f0}
+.btn.blue:hover{background:linear-gradient(180deg,#204070,#122040);box-shadow:0 0 10px rgba(90,154,202,.2)}
 .btn.ghost:hover{border-color:var(--golddim);color:var(--ink)}
 .btn.sm{padding:4px 8px;font-size:10px}
 .btn-row{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px}
@@ -297,6 +299,32 @@ table.t tr:hover td{background:rgba(196,149,74,.04);color:var(--ink)}
 
 /* ── YENİ: KRİZ KARTI ── */
 .crisis-card{background:linear-gradient(180deg,rgba(196,58,63,.1),rgba(196,58,63,.04));border:1px solid var(--red);border-left:3px solid var(--red2);padding:10px 12px;margin-bottom:6px}
+
+/* ── SAVAŞ SİSTEMİ ── */
+.war-card{background:linear-gradient(180deg,rgba(196,58,63,.12),rgba(196,58,63,.04));border:1px solid var(--red);border-top:3px solid var(--red2);padding:12px 14px;margin-bottom:8px}
+.war-nation{font-family:'Cinzel';font-size:14px;color:var(--red2);font-weight:700;margin-bottom:2px}
+.war-since{font-size:10px;color:var(--inkdim);font-family:'IBM Plex Mono';margin-bottom:8px}
+.war-score-row{display:flex;align-items:center;gap:6px;margin:6px 0}
+.war-score-lbl{font-size:9px;color:var(--inkdim);font-family:'Bebas Neue';letter-spacing:.1em;width:30px;text-align:center}
+.war-score-bar{flex:1;height:10px;background:var(--bg);border:1px solid var(--line);overflow:hidden;display:flex}
+.war-score-us{background:linear-gradient(90deg,var(--red),var(--red2));transition:flex .5s}
+.war-score-them{background:linear-gradient(90deg,var(--blue2),var(--blue));transition:flex .5s}
+.attack-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-top:8px}
+.attack-btn{background:var(--bg2);border:1px solid var(--line);padding:8px 10px;text-align:left;transition:border-color .15s;cursor:pointer;width:100%}
+.attack-btn:hover:not([disabled]){border-color:var(--red);background:rgba(196,58,63,.07)}
+.attack-btn[disabled]{opacity:.4;cursor:not-allowed}
+.attack-btn .at{font-family:'Bebas Neue';font-size:11px;letter-spacing:.12em;color:var(--ink);display:block;margin-bottom:2px}
+.attack-btn .ac{font-size:9px;color:var(--inkdim);display:block}
+.attack-btn .acd{font-size:9px;color:var(--red2);font-family:'IBM Plex Mono';display:block;margin-top:2px}
+/* Deniz */
+.ship-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.ship-card{background:var(--bg2);border:1px solid var(--line);padding:9px 11px;transition:border-color .15s}
+.ship-card:hover{border-color:var(--blue2)}
+.ship-name{font-family:'Cinzel';font-size:11px;color:var(--blue2);font-weight:600;margin-bottom:3px}
+.ship-count{font-family:'IBM Plex Mono';font-size:22px;font-weight:700;color:var(--ink);line-height:1}
+.ship-lbl{font-size:8px;color:var(--inkdim);font-family:'Bebas Neue';letter-spacing:.1em}
+.naval-build-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0}
+.naval-build-row+.naval-build-row{border-top:1px solid var(--line)}
 .crisis-card:hover{border-color:var(--red2)}
 @keyframes crisisGlow{0%,100%{box-shadow:none}50%{box-shadow:0 0 10px rgba(232,80,85,.25)}}
 .crisis-tag{font-family:'Bebas Neue';font-size:9px;letter-spacing:.16em;color:var(--red2);margin-bottom:2px}
@@ -441,6 +469,10 @@ table.t tr:hover td{background:rgba(196,149,74,.04);color:var(--ink)}
   <button class="rb" data-tab="parliament" onclick="setTab('parliament')" title="Meclis & Yasama [P]">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 21H21M5 21V9L12 3L19 9V21"/><path d="M9 21V15H15V21"/><rect x="10" y="10" width="4" height="4"/></svg>
     <span>Meclis</span>
+  </button>
+  <button class="rb" data-tab="war" onclick="setTab('war')" id="war-btn" title="Savaş Odası [W]" style="color:var(--reddim)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 4L20 4L20 10L9 21L3 21L3 15Z"/><path d="M14 4L14 10L20 10"/><path d="M5 19L7 17M9 15L11 13"/></svg>
+    <span>Savaş</span>
   </button>
   <button class="rb" data-tab="events" onclick="setTab('events')" id="events-btn" title="Haberler & Olaylar [N]">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M3 4H17V20H3ZM17 8H21V20H17"/><path d="M6 8H14M6 12H14M6 16H14"/></svg>
@@ -738,6 +770,16 @@ function makeInitialState(presidentName){
     ],
     pendingDecision: 'dec1',
     elections: [],
+
+    wars: [],
+
+    navy: {
+      frigates: 2,
+      destroyers: 1,
+      submarines: 0,
+      battleships: 0,
+      building: [],
+    },
 
     mapMode:'political',
     activeTab:'hq',
@@ -1139,6 +1181,43 @@ function gameTick(){
     });
   }
 
+  // Savaş sistemi — cooldown azalt, düşman karşı saldırı
+  if(G.wars){
+    G.wars.filter(w=>w.status==='active').forEach(war=>{
+      // Cooldownları azalt
+      Object.keys(war.attackCooldowns).forEach(k=>{
+        if(war.attackCooldowns[k]>0) war.attackCooldowns[k]--;
+      });
+      // Düşman otomatik karşı saldırı (her 3 günde bir)
+      const r=G.diplo.relations.find(x=>x.code===war.code);
+      const milMod = r&&r.mil==='Çok Güçlü'?1.4:r&&r.mil==='Güçlü'?1.1:r&&r.mil==='Zayıf'?0.6:0.9;
+      if(Math.random() < 0.33 * milMod){
+        const dmg = Math.floor((5+Math.random()*15)*milMod);
+        war.ourScore = clamp(war.ourScore-dmg,0,200);
+        war.theirScore = clamp(war.theirScore+Math.floor(dmg*0.5),0,200);
+        war.warScore = clamp(war.warScore-dmg,-100,100);
+        war.casualties.us += Math.floor(dmg*8);
+        G.army.morale = clamp(G.army.morale-1,0,100);
+        if(war.warScore<=-80) endWar(war.id,'defeat');
+      }
+      // Savaş maliyeti hazineden
+      G.res.treasury = Math.max(0, G.res.treasury - 200_000);
+    });
+  }
+
+  // Gemi inşaatı
+  if(G.navy){
+    G.navy.building.forEach(b=>{ b.daysLeft=Math.max(0,b.daysLeft-1); b.progress=Math.min(100,(b.total-b.daysLeft)/b.total*100); });
+    G.navy.building = G.navy.building.filter(b=>{
+      if(b.daysLeft<=0){
+        G.navy[b.typeId] = (G.navy[b.typeId]||0)+1;
+        addEvent('DENİZ','g',`${b.name} teslim alındı!`,'Tersaneden çıktı. Deniz kuvvetleri güçlendi.');
+        return false;
+      }
+      return true;
+    });
+  }
+
   renderAll();
 }
 
@@ -1165,6 +1244,21 @@ function renderAll(){
   renderPanel();
   renderTicker();
   updateEventBadge();
+  updateWarBadge();
+}
+function updateWarBadge(){
+  const btn=document.getElementById('war-btn');
+  if(!btn||!G) return;
+  const active=G.wars.filter(w=>w.status==='active').length;
+  let badge=btn.querySelector('.badge');
+  if(active>0){
+    btn.style.color='var(--red2)';
+    if(!badge){ badge=document.createElement('span'); badge.className='badge'; btn.appendChild(badge); }
+    badge.textContent=active;
+  } else {
+    btn.style.color='';
+    if(badge) badge.remove();
+  }
 }
 
 function renderTopBar(){
@@ -1249,6 +1343,7 @@ function renderPanel(){
     case 'interior':  renderInterior(header,tabs,body); break;
     case 'parliament':renderParliament(header,tabs,body); break;
     case 'events':    renderEvents(header,tabs,body); break;
+    case 'war':       renderWar(header,tabs,body); break;
   }
 }
 
@@ -1597,7 +1692,7 @@ function resolveDecision(decId,action){
 function renderArmy(header,tabs,body){
   renderHeader(header,'Bakanlık 02 — Savunma','Genelkurmay Başkanlığı','Kara, Hava, Deniz kuvvetleri');
   const st=getSubTab('army','div');
-  renderSubTabs(tabs,[['div','Tümenler'],['cmd','Komutanlar'],['train','Eğitim'],['deploy','Cephe']],'army');
+  renderSubTabs(tabs,[['div','Tümenler'],['cmd','Komutanlar'],['train','Eğitim'],['deploy','Cephe'],['navy','Deniz']],'army');
   let html='';
   if(st==='div'||!G.activeSubTab.army){
     html+=sectHTML('Genel Durum',''+
@@ -1692,6 +1787,42 @@ function renderArmy(header,tabs,body){
       irowHTML('Tıbbi malzeme','9 günlük')+
       `<div class="btn-row">${btn('İkmal Gönder','sendSupplies()','',G.res.oil<500)}</div>`
     );
+  } else if(st==='navy'){
+    const n=G.navy;
+    const totalShips=n.frigates+n.destroyers+n.submarines+n.battleships;
+    html+=sectHTML('Deniz Kuvvetleri Genel',''+
+      irowHTML('Toplam gemi',totalShips)+
+      irowHTML('Fırkateyn',n.frigates)+
+      irowHTML('Muhrip',n.destroyers)+
+      irowHTML('Denizaltı',n.submarines)+
+      irowHTML('Savaş Gemisi',n.battleships)
+    );
+    html+=`<div class="sect"><div class="stitle"><span>Filo</span></div>
+      <div class="ship-grid">
+        ${[['frigates','Fırkateyn','🚢'],['destroyers','Muhrip','⚓'],['submarines','Denizaltı','🤿'],['battleships','Savaş Gemisi','⚔']].map(([k,label,icon])=>`
+          <div class="ship-card">
+            <div class="ship-name">${icon} ${label}</div>
+            <div class="ship-count">${n[k]}</div>
+            <div class="ship-lbl">GEMİ</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+    if(n.building.length){
+      html+=sectHTML('Tersane Kuyruğu',n.building.map(b=>`<div class="card">
+        <div class="card-title">${b.name}</div>
+        ${irowHTML('Kalan',b.daysLeft+' gün')}
+        ${pbarHTML(b.progress,'thin')}
+      </div>`).join(''));
+    }
+    html+=sectHTML('Yeni Gemi Sipariş Et',SHIP_TYPES.map((s,i)=>`
+      <div class="naval-build-row">
+        <div>
+          <div style="font-family:Cinzel,serif;font-size:12px;color:var(--ink);font-weight:600">${s.icon} ${s.name}</div>
+          <div style="font-size:10px;color:var(--inkdim);margin-top:2px">${s.days} gün • ${fmtMoney(s.cost)} • ${s.steel}t çelik</div>
+          <div style="font-size:10px;color:var(--inkdim)">${s.desc}</div>
+        </div>
+        ${btn('Sipariş Ver',`buildShip('${s.id}')`, 'sm blue', G.res.treasury<s.cost||G.res.steel<s.steel)}
+      </div>`).join(''));
   }
   body.innerHTML=html;
 }
@@ -1796,6 +1927,15 @@ function renderIndustry(header,tabs,body){
         ${btn('İnşa Et',`startBuild('${x.n}','${x.k}',${x.cost},${x.days})`,'sm',G.res.treasury<x.cost)}
       </div>`).join('')
     );
+    html+=sectHTML('Tersane — Savaş Gemisi Üretimi',SHIP_TYPES.map((s,i)=>`
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;${i?'border-top:1px solid var(--line)':''}">
+        <div>
+          <div style="font-family:Cinzel,serif;font-size:12px;color:var(--blue2);font-weight:600">${s.icon} ${s.name}</div>
+          <div style="font-size:10px;color:var(--inkdim);margin-top:2px">${s.days} gün • ${fmtMoney(s.cost)} • ${s.steel}t çelik</div>
+          <div style="font-size:10px;color:var(--inkdim)">${s.desc} — Saldırı:${s.attack} Savunma:${s.defense}</div>
+        </div>
+        ${btn('Sipariş Ver',`buildShip('${s.id}')`, 'blue sm', G.res.treasury<s.cost||G.res.steel<s.steel)}
+      </div>`).join(''));
   } else {
     const eq=G.equipment;
     const rows=[['Tüfek','rifles'],['Topçu','artillery'],['Tank','tanks'],['Uçak','aircraft'],['Mühimmat','ammo']];
@@ -2004,6 +2144,8 @@ function renderDiplo(header,tabs,body){
         ${r.status==='Düşman'?btn('Ateşkes Teklif Et',`proposeCeasefire('${r.code}')`):''}
         ${r.status!=='Müttefik'&&r.status!=='Düşman'?btn('Anlaşma Öner',`proposeAgreement('${r.code}')`, 'ghost sm'):''}
         ${r.status==='Müttefik'?btn('İttifakı Yenile',`renewAlliance('${r.code}')`,'green sm'):''}
+        ${r.status!=='Müttefik'&&!G.wars.find(w=>w.code===r.code&&w.status==='active')?btn('Savaş İlan Et',`declareWar('${r.code}')`, 'red sm'):''}
+        ${G.wars.find(w=>w.code===r.code&&w.status==='active')?`<button class="btn red sm" onclick="setTab('war')">⚔ Savaş Sürüyor →</button>`:''}
       </div>
     </div>`).join(''))}
     ${sectHTML('Aktif Antlaşmalar',`<table class="t"><thead><tr><th>Antlaşma</th><th>Taraf</th><th>Tip</th><th>Son</th></tr></thead><tbody>
@@ -2412,6 +2554,217 @@ function resolveElection(elecId){
   renderAll();
 }
 
+// ═══════════════════════════════════════════════════════════════
+// SAVAŞ SİSTEMİ
+// ═══════════════════════════════════════════════════════════════
+
+const ATTACK_TYPES = [
+  {id:'infantry',   name:'Piyade Saldırısı',    icon:'⚔',  cost:{treasury:500_000, manpower:200},  cooldown:1, power:15, casualtyUs:120, casualtyThem:180, desc:'Kara kuvvetleriyle klasik taarruz',     req:null},
+  {id:'artillery',  name:'Topçu Bombardımanı',  icon:'💥', cost:{treasury:800_000, steel:50},       cooldown:2, power:22, casualtyUs:30,  casualtyThem:280, desc:'Uzun menzilli ağır topçu atışı',       req:null},
+  {id:'naval',      name:'Deniz Harekatı',       icon:'⚓', cost:{treasury:1_200_000, oil:200},     cooldown:3, power:30, casualtyUs:10,  casualtyThem:320, desc:'Sahil ve liman hedeflerini vur',        req:'navy'},
+  {id:'air',        name:'Hava Saldırısı',       icon:'✈', cost:{treasury:1_500_000, oil:300},     cooldown:2, power:28, casualtyUs:5,   casualtyThem:350, desc:'Stratejik bombalama ve hava üstünlüğü', req:'aircraft'},
+  {id:'special',    name:'Özel Harekat',          icon:'🎯', cost:{treasury:2_000_000, manpower:80}, cooldown:4, power:35, casualtyUs:15,  casualtyThem:200, desc:'Komando ve istihbarat destekli baskın', req:null},
+  {id:'siege',      name:'Şehir Kuşatması',       icon:'🏰', cost:{treasury:600_000, food:500},     cooldown:5, power:40, casualtyUs:80,  casualtyThem:400, desc:'Uzun süreli şehir ablukası',           req:null},
+];
+
+const SHIP_TYPES = [
+  {id:'frigates',    name:'Fırkateyn',    icon:'🚢', cost:18_000_000, steel:400, days:90,  attack:6, defense:7,  desc:'Genel amaçlı savaş gemisi'},
+  {id:'destroyers',  name:'Muhrip',       icon:'⚓', cost:28_000_000, steel:600, days:120, attack:8, defense:6,  desc:'Anti-denizaltı ve hızlı saldırı'},
+  {id:'submarines',  name:'Denizaltı',    icon:'🤿', cost:35_000_000, steel:500, days:150, attack:9, defense:4,  desc:'Gizli operasyon ve blokaj'},
+  {id:'battleships', name:'Savaş Gemisi', icon:'⚔', cost:65_000_000, steel:1200,days:200, attack:12,defense:10, desc:'Ağır zırhlı amiral gemisi'},
+];
+
+function declareWar(code){
+  const r = G.diplo.relations.find(x=>x.code===code);
+  if(!r) return;
+  if(G.wars.find(w=>w.code===code&&w.status==='active')){ showToast('SAVAŞ','Zaten savaştasınız',r.name+' ile çatışma sürüyor.'); return; }
+  if(r.status==='Müttefik'){ showToast('DİPLOMASİ','Müttefike savaş ilan edilemez','Önce ittifakı bozun.'); return; }
+  if(G.res.treasury < 5_000_000){ showToast('MALİYE','Yetersiz hazine','Savaş ilanı için en az ₺5M gerekli.'); return; }
+  G.res.treasury -= 5_000_000;
+  r.status = 'Düşman'; r.rel = Math.min(r.rel, -60);
+  const warId = 'w'+Date.now();
+  G.wars.push({
+    id: warId,
+    code, name: r.name,
+    status: 'active',
+    since: fmtDate(G.date),
+    ourScore: 50, theirScore: 50,
+    casualties: {us:0, them:0},
+    warScore: 0,
+    attackCooldowns: {},
+  });
+  G.warSupport = Math.min(100, G.warSupport+15);
+  addEvent('SAVAŞ','r',r.name+' ile savaş ilan edildi!','Silahlı kuvvetler seferberlik bildirisi yayımlandı. Uluslararası kamuoyu tepkisini bekliyor.');
+  setTab('war');
+}
+
+function performAttack(warId, typeId){
+  const war = G.wars.find(w=>w.id===warId);
+  const type = ATTACK_TYPES.find(t=>t.id===typeId);
+  if(!war||!type) return;
+
+  // Cooldown kontrolü
+  const cooldownLeft = (war.attackCooldowns[typeId]||0);
+  if(cooldownLeft > 0){ showToast('SAVAŞ','Saldırı hazır değil',`${type.name} için ${cooldownLeft} gün beklenmeli.`); return; }
+
+  // Kaynak kontrolü
+  if(type.cost.treasury && G.res.treasury < type.cost.treasury){ showToast('MALİYE','Yetersiz hazine'); return; }
+  if(type.cost.manpower && G.res.manpower < type.cost.manpower){ showToast('ORDU','Yetersiz insan gücü'); return; }
+  if(type.cost.oil && G.res.oil < type.cost.oil){ showToast('LOJİSTİK','Yetersiz petrol'); return; }
+  if(type.cost.steel && G.res.steel < type.cost.steel){ showToast('SANAYİ','Yetersiz çelik'); return; }
+  if(type.cost.food && G.res.food < type.cost.food){ showToast('TARIM','Yetersiz gıda'); return; }
+  if(type.req==='navy' && (G.navy.frigates+G.navy.destroyers+G.navy.battleships)<1){ showToast('DENİZ','Deniz kuvvetleri yetersiz','En az 1 savaş gemisi gerekli.'); return; }
+  if(type.req==='aircraft' && G.equipment.aircraft.stock<5){ showToast('HAVA','Hava kuvvetleri yetersiz','En az 5 uçak gerekli.'); return; }
+
+  // Kaynakları harca
+  if(type.cost.treasury) G.res.treasury -= type.cost.treasury;
+  if(type.cost.manpower) G.res.manpower -= type.cost.manpower;
+  if(type.cost.oil) G.res.oil -= type.cost.oil;
+  if(type.cost.steel) G.res.steel -= type.cost.steel;
+  if(type.cost.food) G.res.food -= type.cost.food;
+
+  // Savaş gücü hesapla
+  const generalBonus = G.army.divisions.filter(d=>d.frontline).length * 3;
+  const moraleMod = G.army.morale / 100;
+  const success = Math.random() < (0.45 + moraleMod*0.3 + generalBonus*0.01);
+  const powerRoll = success ? type.power + Math.floor(Math.random()*15) : Math.floor(type.power*0.3);
+
+  war.ourScore = clamp(war.ourScore + (success?powerRoll:-3), 0, 200);
+  war.theirScore = clamp(war.theirScore + (success?-Math.floor(powerRoll*.6):8), 0, 200);
+  war.warScore = clamp(war.warScore + (success?powerRoll:-3), -100, 100);
+  war.casualties.us += success ? type.casualtyUs : type.casualtyUs * 2;
+  war.casualties.them += success ? type.casualtyThem : Math.floor(type.casualtyThem * 0.3);
+  G.army.morale = clamp(G.army.morale + (success?2:-4), 0, 100);
+
+  // Cooldown ayarla
+  war.attackCooldowns[typeId] = type.cooldown;
+
+  if(success){
+    addEvent('SAVAŞ','g',`${type.name} başarılı!`,`${war.name} ağır kayıp verdi. Savaş puanı: ${war.warScore>0?'+':''}${war.warScore}`);
+  } else {
+    addEvent('SAVAŞ','r',`${type.name} püskürtüldü`,`Taarruz aksamalarla geri çekildi. Kayıp: ${type.casualtyUs*2} asker`);
+  }
+
+  // Savaş bitti mi?
+  if(war.warScore >= 80){ endWar(warId,'victory'); }
+  else if(war.warScore <= -80){ endWar(warId,'defeat'); }
+  else { renderPanel(); }
+}
+
+function endWar(warId, result){
+  const war = G.wars.find(w=>w.id===warId);
+  if(!war) return;
+  war.status = result;
+  const r = G.diplo.relations.find(x=>x.code===war.code);
+  if(result==='victory'){
+    if(r){ r.rel=clamp(r.rel+20,-100,100); r.status='Soğuk'; }
+    G.warSupport = clamp(G.warSupport-10,0,100);
+    G.approval = clamp(G.approval+8,0,100);
+    G.legitimacy = clamp(G.legitimacy+5,0,100);
+    G.res.treasury += 15_000_000;
+    addEvent('SAVAŞ','g',`${war.name} ile zafer!`,'Savaş galibiyetle sona erdi. Uluslararası prestij arttı. +₺15M savaş tazminatı.');
+  } else if(result==='defeat'){
+    if(r){ r.rel=clamp(r.rel-10,-100,-30); }
+    G.warSupport = clamp(G.warSupport-25,0,100);
+    G.approval = clamp(G.approval-12,0,100);
+    G.stability = clamp(G.stability-8,0,100);
+    addEvent('SAVAŞ','r',`${war.name} karşısında yenilgi`,'Güçler geri çekiliyor. Moral çöktü. Barış masasına oturma zorunluluğu doğdu.');
+  } else {
+    addEvent('SAVAŞ','',`${war.name} ile ateşkes`,'Çatışma durakladı. Taraflar müzakere masasına oturuyor.');
+  }
+  renderAll();
+}
+
+function ceaseFireWar(warId){
+  const war = G.wars.find(w=>w.id===warId);
+  if(!war||war.status!=='active') return;
+  endWar(warId,'ceasefire');
+}
+
+function buildShip(typeId){
+  const st = SHIP_TYPES.find(t=>t.id===typeId);
+  if(!st) return;
+  if(G.res.treasury < st.cost){ showToast('MALİYE','Yetersiz hazine',`${st.name} için ${fmtMoney(st.cost)} gerekli.`); return; }
+  if(G.res.steel < st.steel){ showToast('SANAYİ','Yetersiz çelik',`${st.name} için ${st.steel} ton çelik gerekli.`); return; }
+  G.res.treasury -= st.cost;
+  G.res.steel -= st.steel;
+  G.navy.building.push({typeId, name:st.name, daysLeft:st.days, total:st.days, progress:0, id:'sb'+Date.now()});
+  addEvent('DENİZ','g',`${st.name} inşaatı başladı`,`${st.days} günde tersaneden çıkacak. Maliyet: ${fmtMoney(st.cost)}`);
+  renderPanel();
+}
+
+// ── WAR RENDER ──
+function renderWar(header,tabs,body){
+  renderHeader(header,'Savaş Odası — Harp Merkezi','Aktif Savaşlar & Saldırı Komutası','Cephe durumu, kayıplar, taarruz planı');
+  const activeWars = G.wars.filter(w=>w.status==='active');
+  if(activeWars.length===0){
+    body.innerHTML=sectHTML('Savaş Odası',`<div style="padding:16px;text-align:center;color:var(--inkdim);font-size:12px">
+      <div style="font-family:Cinzel,serif;font-size:16px;color:var(--gold2);margin-bottom:8px">Barış Dönemi</div>
+      Şu an aktif savaş yok. Savaş ilan etmek için Dışişleri sekmesine gidin.<br/>
+      <div class="btn-row" style="justify-content:center;margin-top:12px">
+        ${btn('Dışişleri →','setTab(\'diplo\')','ghost sm')}
+      </div>
+    </div>`);
+    const pastWars = G.wars.filter(w=>w.status!=='active');
+    if(pastWars.length){
+      body.innerHTML+=sectHTML('Geçmiş Çatışmalar',pastWars.map(w=>`
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:baseline">
+            <span class="card-title" style="margin-bottom:0">${w.name}</span>
+            ${pill(w.status==='victory'?'Zafer':w.status==='defeat'?'Yenilgi':'Ateşkes',w.status==='victory'?'g':w.status==='defeat'?'r':'')}
+          </div>
+          ${irowHTML('Başlangıç',w.since)}
+          ${irowHTML('Kayıplarımız',fmtNum(w.casualties.us)+' asker')}
+          ${irowHTML('Düşman kaybı',fmtNum(w.casualties.them)+' asker')}
+        </div>`).join(''));
+    }
+    return;
+  }
+  let html='';
+  activeWars.forEach(war=>{
+    const usShare = war.ourScore/(war.ourScore+war.theirScore)*100;
+    const themShare = 100-usShare;
+    html+=`<div class="war-card">
+      <div class="war-nation">${war.name}</div>
+      <div class="war-since">Savaş başladı: ${war.since}</div>
+      <div class="war-score-row">
+        <span class="war-score-lbl" style="color:var(--red2)">BİZ</span>
+        <div class="war-score-bar">
+          <div class="war-score-us" style="flex:${usShare.toFixed(1)}"></div>
+          <div class="war-score-them" style="flex:${themShare.toFixed(1)}"></div>
+        </div>
+        <span class="war-score-lbl" style="color:var(--blue2)">ONLAR</span>
+      </div>
+      ${irowHTML('Savaş puanı',`<span class="v ${war.warScore>=0?'pos':'neg'}">${war.warScore>=0?'+':''}${war.warScore}</span>`)}
+      ${irowHTML('Kayıplarımız',fmtNum(war.casualties.us)+' asker')}
+      ${irowHTML('Düşman kaybı',fmtNum(war.casualties.them)+' asker')}
+      <div class="stitle" style="margin-top:10px"><span>Saldırı Seçenekleri</span></div>
+      <div class="attack-grid">
+        ${ATTACK_TYPES.map(t=>{
+          const cd = (war.attackCooldowns[t.id]||0);
+          const canUse = cd<=0;
+          const costStr = [
+            t.cost.treasury?`₺${(t.cost.treasury/1e6).toFixed(1)}M`:'',
+            t.cost.manpower?`${t.cost.manpower} asker`:'',
+            t.cost.oil?`${t.cost.oil} petrol`:'',
+            t.cost.steel?`${t.cost.steel} çelik`:'',
+          ].filter(Boolean).join(' / ');
+          return `<button class="attack-btn" ${canUse?'':`disabled`} onclick="performAttack('${war.id}','${t.id}')">
+            <span class="at">${t.icon} ${t.name}</span>
+            <span class="ac">${t.desc}</span>
+            <span class="acd">${canUse?costStr:'⏱ '+cd+' gün sonra'}</span>
+          </button>`;
+        }).join('')}
+      </div>
+      <div class="btn-row" style="margin-top:10px">
+        ${btn('Ateşkes İste',`ceaseFireWar('${war.id}')`, 'ghost sm')}
+        ${btn('Zaferi İlan Et',`endWar('${war.id}','victory')`, 'green sm', war.warScore<80)}
+      </div>
+    </div>`;
+  });
+  body.innerHTML=html;
+}
+
 // ── EVENTS ──
 function renderEvents(header,tabs,body){
   renderHeader(header,'Cumhurbaşkanlığı Bülteni','Haber & Olaylar','Devletten halka, dünyadan saraya');
@@ -2534,6 +2887,7 @@ document.addEventListener('keydown', e=>{
     case 'c': case 'C': setTab('interior'); break;
     case 'p': case 'P': setTab('parliament'); break;
     case 'n': case 'N': setTab('events'); break;
+    case 'w': case 'W': setTab('war'); break;
     case 'm': case 'M': {
       const modes=['political','fronts','econ'];
       const idx=modes.indexOf(G.mapMode);
