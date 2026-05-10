@@ -71,8 +71,6 @@ button:active{transform:scale(.97)}
 
 /* ── MAP ── */
 #leaflet-map{width:100%;height:100%}
-.leaflet-container{background:#060b14}
-.leaflet-tile-pane{opacity:.92}
 .maptools{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:6px;z-index:1000}
 .prov-label.leaflet-tooltip{background:rgba(12,8,4,.72)!important;border:1px solid rgba(196,149,74,.18)!important;box-shadow:none!important;padding:1px 5px!important;border-radius:2px!important;font-family:'Cinzel',serif;font-size:9px;font-weight:600;color:#c8b890;letter-spacing:.05em;white-space:nowrap;pointer-events:none}
 .prov-label.leaflet-tooltip::before{display:none!important}
@@ -886,27 +884,29 @@ function initMap(){
 function provStyle(f){
   const rawName=f.properties.name;
   const prov=PROV_BY_NAME[GEO_ALIASES[rawName]||rawName];
-  if(!prov||!G) return {fillColor:'#1e1a14',color:'#0a0806',weight:0.5,fillOpacity:0.55};
+  if(!prov||!G) return {fillOpacity:0,color:'#3a3020',weight:0.4};
   const kind=getProvKind(prov.id);
   const sel=G.selectedProv===prov.id;
-  let fillColor,color='#0a0806',weight=0.8,fillOpacity=0.82,dashArray=null;
+  let fillColor='#000',color='#6a5a3a',weight=0.5,fillOpacity=0,dashArray=null;
+
   if(G.mapMode==='econ'){
     const ind=prov.ind;
-    if(kind==='capital'||kind==='owned'){fillColor=`hsl(42,${38+ind*4}%,${16+ind*2.5}%)`;color='#c4954a';weight=1;}
-    else if(kind==='claim'){fillColor=`hsl(38,${22+ind*3}%,${13+ind*2}%)`;color='#c4954a';dashArray='4,3';}
-    else{fillColor=`hsl(210,${8+ind*2}%,${10+ind*1.8}%)`;}
+    if(kind==='capital'||kind==='owned'){fillColor=`hsl(42,${38+ind*4}%,${16+ind*2.5}%)`;fillOpacity=0.78;color='#c4954a';weight=1;}
+    else if(kind==='claim'){fillColor=`hsl(38,${22+ind*3}%,${20+ind*2}%)`;fillOpacity=0.55;color='#c4954a';weight=0.8;dashArray='4,3';}
+    else{fillOpacity=0;color='#4a3a20';weight=0.4;}
   } else if(G.mapMode==='fronts'){
     const frontIds=['ek','kon','krm','nev','aks','afn'];
     const isFront=frontIds.includes(prov.id);
-    if(kind==='capital'||kind==='owned'){fillColor=isFront?'#8a1518':'#6a2020';color='#3a1010';}
-    else if(kind==='claim'){fillColor=isFront?'#8a5010':'#5a3a10';color='#c4954a';weight=1.2;dashArray='4,3';}
-    else{fillColor=isFront?'#3a1828':'#26202e';color=isFront?'#7a3060':'#2e2040';}
+    if(kind==='capital'||kind==='owned'){fillColor=isFront?'#b01820':'#7a2828';fillOpacity=0.72;color='#c43a3f';weight=1;}
+    else if(kind==='claim'){fillColor=isFront?'#9a5010':'#6a4010';fillOpacity=0.60;color='#c4954a';weight=1;dashArray='4,3';}
+    else if(isFront){fillColor='#500030';fillOpacity=0.30;color='#8a3060';weight=0.8;}
+    else{fillOpacity:0;color='#4a3a20';weight=0.3;}
   } else {
-    if(kind==='capital'||kind==='owned'){fillColor='#c43a3f';color='#5a1a1c';}
-    else if(kind==='claim'){fillColor='#7a5d2e';color='#c4954a';weight=1;dashArray='4,3';}
-    else{fillColor='#2e2820';color='#1a1208';}
+    if(kind==='capital'||kind==='owned'){fillColor='#c43a3f';fillOpacity=0.72;color='#ff6060';weight=1.2;}
+    else if(kind==='claim'){fillColor='#c4954a';fillOpacity=0.45;color='#e8b96a';weight=1;dashArray='5,4';}
+    else{fillOpacity=0;color='#4a3a20';weight=0.4;}
   }
-  if(sel){color='#e8b96a';weight=2.5;}
+  if(sel){color='#e8b96a';weight=2.5;fillOpacity=Math.max(fillOpacity,0.3);}
   return{fillColor,color,weight,fillOpacity,dashArray};
 }
 
