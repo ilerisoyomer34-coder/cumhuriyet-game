@@ -2,7 +2,7 @@
   "name": "Cumhuriyet - Strateji Oyunu",
   "short_name": "Cumhuriyet",
   "description": "Türkiye'yi yönet, şehirleri geliştir, orduyu komuta et.",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "landscape",
   "theme_color": "#c4954a",
