@@ -14,6 +14,8 @@
 <link rel="icon" type="image/x-icon" href="favicon.ico"/>
 <link rel="apple-touch-icon" href="apple-touch-icon.png"/>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -68,10 +70,9 @@ button:active{transform:scale(.97)}
 .rdiv{width:28px;height:1px;background:var(--line);margin:4px 0}
 
 /* ── MAP ── */
-#mapsvg{width:100%;height:100%;cursor:grab}
-#mapsvg:active{cursor:grabbing}
-.prov{transition:fill .12s,stroke .12s;cursor:pointer}
-.prov:hover{filter:brightness(1.3)}
+#leaflet-map{width:100%;height:100%}
+.leaflet-container{background:#060b14}
+.leaflet-tile-pane{opacity:.92}
 .maptools{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:6px;z-index:3}
 .mapbtn{background:rgba(14,11,7,.88);border:1px solid var(--line);color:var(--inkdim);padding:6px 12px;font-family:'Bebas Neue';font-size:12px;letter-spacing:.12em;transition:all .15s;backdrop-filter:blur(6px)}
 .mapbtn:hover,.mapbtn.active{color:var(--gold2);border-color:var(--golddim);background:rgba(196,149,74,.1)}
@@ -430,7 +431,7 @@ table.t tr:hover td{background:rgba(196,149,74,.04);color:var(--ink)}
 
 <!-- STAGE (MAP) -->
 <div id="stage">
-  <svg id="mapsvg" viewBox="1100 230 280 200" preserveAspectRatio="xMidYMid slice"></svg>
+  <div id="leaflet-map"></div>
   <div class="maptools">
     <div class="mapmode-row">
       <button class="mapbtn active" id="mm-political" onclick="setMapMode('political')">Siyasi</button>
@@ -721,7 +722,6 @@ function makeInitialState(presidentName){
     activeTab:'hq',
     activeSubTab:{},
     selectedProv: null,
-    viewBox:{x:1100,y:230,w:280,h:200},
   };
 }
 
@@ -753,11 +753,6 @@ document.getElementById('presname').addEventListener('keydown',e=>{ if(e.key==='
 // ═══════════════════════════════════════════════════════════════
 // MAP
 // ═══════════════════════════════════════════════════════════════
-
-const geoX = lon => (lon+180)*5;
-const geoY = lat => (90-lat)*5;
-function pts(coords){ return coords.map(c=>geoX(c[0]).toFixed(1)+','+geoY(c[1]).toFixed(1)).join(' '); }
-function pathD(coords){ return 'M'+coords.map(c=>geoX(c[0]).toFixed(1)+' '+geoY(c[1]).toFixed(1)).join('L')+'Z'; }
 
 // Province data: [id, name, lon, lat, basekind, pop_k, ind, sz]
 const PROV_DATA = [
@@ -844,176 +839,60 @@ const PROV_DATA = [
   ['sir2','Siirt',41.94,37.93,'enemy',340,1,.44]
 ];
 
-function makePolyD(lon,lat,sz){
-  const r=0.44*sz, seed=(lon*13.7+lat*31.1)|0;
-  const rnd=i=>{ const x=Math.sin(seed*9301+i*49297)*233280; return x-Math.floor(x); };
-  const pts=[]; const sides=7;
-  for(let i=0;i<sides;i++){
-    const a=(i/sides)*Math.PI*2+rnd(i*3)*.25;
-    const ri=r*(0.85+rnd(i*5+1)*.3);
-    pts.push([lon+Math.cos(a)*ri*1.15, lat+Math.sin(a)*ri*.85]);
-  }
-  return pathD(pts);
-}
-
-const PROVINCES = PROV_DATA.map(([id,name,lon,lat,bk,popK,ind,sz])=>({
-  id,name,lon,lat,baseKind:bk,pop:popK*1000,ind,
-  d: makePolyD(lon,lat,sz),
-  cx:geoX(lon),cy:geoY(lat),
+const PROVINCES = PROV_DATA.map(([id,name,lon,lat,bk,popK,ind])=>({
+  id,name,lon,lat,baseKind:bk,pop:popK*1000,ind
 }));
+const PROV_BY_NAME={};
+PROVINCES.forEach(p=>{PROV_BY_NAME[p.name]=p;});
 
 // Simplified world outline
-const WORLD_OUTLINES = [
-  {id:'rus',d:'M135 155 L180 130 L180 100 L160 95 L140 100 L120 105 L100 108 L80 100 L60 90 L40 90 L27 95 L30 110 L40 120 L60 125 L80 125 L100 115 L120 120 L135 155Z'},
-  {id:'eur',d:'M130 185 L160 180 L165 195 L150 205 L130 210 L120 200 L125 190Z'},
-  {id:'afr',d:'M130 220 L170 215 L175 260 L160 300 L145 310 L130 300 L125 260 L128 230Z'},
-  {id:'asi',d:'M165 165 L210 155 L230 160 L235 180 L220 195 L200 195 L180 185 L165 175Z'},
-  {id:'nam',d:'M30 155 L75 150 L80 165 L70 195 L55 205 L35 195 L25 175Z'},
-  {id:'sam',d:'M50 205 L80 200 L90 220 L85 260 L70 270 L52 260 L45 235 L48 215Z'},
-  {id:'aus',d:'M225 240 L265 230 L270 260 L260 270 L240 268 L225 255Z'},
-];
 
-// Some key world countries as SVG paths (very simplified)
-const COUNTRY_PATHS = [
-  // Europe
-  {id:'fra',n:'Fransa',d:pathD([[-1,49.5],[2.5,51],[5.5,49.5],[7.5,47.5],[6.8,46],[7.5,43.5],[3,43.3],[1,42.5],[-1.5,43.3],[-1.7,46]])},
-  {id:'deu',n:'Almanya',d:pathD([[6,53.5],[10.5,54.5],[14.5,54],[14.8,52.5],[12,50.3],[10,47.5],[7.5,47.5],[7.5,49],[6,50.5],[6,53.5]])},
-  {id:'esp',n:'İspanya',d:pathD([[-9,43.5],[-1.7,43.3],[1,42.5],[3,40],[0.5,38.5],[-5,36],[-9,37],[-9,40]])},
-  {id:'ita',n:'İtalya',d:pathD([[7,45.7],[13.5,46],[13.7,45.5],[12.5,44.7],[14,44],[15,42.5],[18,40.5],[15.6,38],[12.5,37.5],[11,40],[9,43.5],[7.5,44]])},
-  {id:'pol',n:'Polonya',d:pathD([[14.7,54],[22,54.5],[24,52.5],[24,50.5],[17,49.7],[15,50.5],[14.7,54]])},
-  {id:'ukr',n:'Ukrayna',d:pathD([[22.5,49.5],[31,52.3],[38,49.5],[40,48.5],[37,47.5],[34,46],[33.5,45],[28.5,45.5],[24,47]])},
-  {id:'rou',n:'Romanya',d:pathD([[22,48],[26.5,48],[28.5,46.5],[28.7,45.4],[26.5,44],[23.5,44],[22,44.7]])},
-  {id:'bgr',n:'Bulgaristan',d:pathD([[22.5,44],[26.5,44],[28,43.7],[28,42],[26,41.3],[23,41.4],[22.5,42.3]])},
-  {id:'grc',n:'Yunanistan',d:pathD([[20.5,40],[22,41],[23,41.4],[25,41.3],[26.7,40.4],[25,40.7],[23,40],[22.5,39],[23,38],[21.5,38],[20.5,38.5]])},
-  {id:'geo',n:'Gürcistan',d:pathD([[40,43.5],[44,42.5],[46.5,41.5],[46,41],[43,41],[40,42.5]])},
-  {id:'arm',n:'Ermenistan',d:pathD([[43,41.4],[46,41],[46,39.5],[44.5,39],[43,40]])},
-  {id:'aze',n:'Azerbaycan',d:pathD([[44.8,41.4],[46.5,41.5],[49,41.5],[50,40],[49,39],[46,39.5],[44.5,39]])},
-  // Middle East
-  {id:'syr',n:'Suriye',d:pathD([[36,36.6],[40,37],[41.5,37],[42,36],[41,34.5],[39,33],[36,32.6],[36.4,33.8],[35.8,34.7]])},
-  {id:'irq',n:'Irak',d:pathD([[42,37],[46.5,37],[48,35.8],[48.5,33],[47.5,30.5],[44,29.7],[42,30],[40,32],[39,33],[40,34.5],[42,37]])},
-  {id:'irn',n:'İran',d:pathD([[44.5,39],[50,37.5],[55,38],[60,37],[62,35],[60.5,32],[60,29],[57,25.5],[51,28],[48,30],[45.5,32],[44.5,39]])},
-  {id:'sau',n:'S. Arabistan',d:pathD([[34.7,29],[39,32],[42,30],[46.5,29.5],[48.5,29],[50.5,26],[52,22.5],[55,20],[48,17],[42,16],[38,21],[35.5,26]])},
-  // Russia
-  {id:'rus',n:'Rusya',d:pathD([[27,60],[40,73],[60,72],[80,75],[120,76],[140,75],[160,75],[180,75],[180,68],[160,60],[140,55],[130,55],[120,50],[100,52],[80,55],[60,72],[40,73]])},
-  // Central Asia
-  {id:'kaz',n:'Kazakistan',d:pathD([[47,55],[60,52],[75,53],[83,47],[80,44],[65,42],[55,42],[50,46]])},
-  // East
-  {id:'chn',n:'Çin',d:pathD([[74,38],[85,45],[97,51],[110,50],[123,40],[121,32],[115,22],[105,22],[97,22],[97,28],[88,27],[74,38]])},
-  {id:'ind',n:'Hindistan',d:pathD([[68,24],[77,32],[80,28],[88,27],[92,28],[97,24],[90,22],[85,19],[77,8],[74,15],[70,20]])},
-  // Africa
-  {id:'egy',n:'Mısır',d:pathD([[25,31.5],[34,31.5],[34.5,29],[33,22],[25,22],[25,28]])},
-  {id:'lby',n:'Libya',d:pathD([[11.5,33],[20,32.5],[25,31.5],[25,22],[11,24],[10,30]])},
-  {id:'dza',n:'Cezayir',d:pathD([[-2,35],[8,36.5],[8,33],[12,21],[3,19],[-3,20],[-5,25],[-8,28]])},
-  // Americas
-  {id:'usa',n:'ABD',d:pathD([[-125,49],[-67,47],[-70,42],[-75,38],[-80,32],[-85,30],[-94,29],[-100,26],[-110,31],[-120,34],[-124,40],[-125,49]])},
-  {id:'can',n:'Kanada',d:pathD([[-140,70],[-60,60],[-66,44],[-77,44],[-83,46],[-95,49],[-125,49],[-140,60]])},
-  {id:'bra',n:'Brezilya',d:pathD([[-50,2],[-35,-6],[-37,-12],[-39,-15],[-40,-22],[-46,-24],[-55,-30],[-58,-20],[-60,-15],[-65,-10],[-68,2],[-60,5]])},
-  // Oceania
-  {id:'aus',n:'Avustralya',d:pathD([[113,-22],[120,-34],[131,-31.5],[140,-37.5],[151,-33],[153,-29],[145,-15],[131,-12],[113,-22]])},
-];
+// ── LEAFLET MAP ENGINE ──
+let leafletMap=null, provGeoLayer=null;
 
-const TR_OUTLINE = pathD([[36.2,36.5],[36.7,36.7],[39,36.7],[40.5,37],[42,37.2],[43.5,37.3],[44.6,37.4],[44.8,38],[44.4,39.4],[43.7,40.1],[44,40.5],[43.4,41.1],[42.5,41.4],[40.5,41.4],[39,41.4],[38,41.2],[37,41.1],[36,41.4],[35,42],[33.5,42.05],[32,42],[30.2,41.5],[29.1,41.2],[28,41.1],[27.5,42],[26.6,41.95],[26.1,41.7],[26.4,41],[26.7,40.5],[26.2,40.1],[26.7,39.5],[26.7,38.7],[27.2,38.2],[27.5,37.3],[28.5,36.7],[29.7,36.2],[31,36.2],[32.5,36.3],[33.5,36.1],[34.4,36.2],[35.6,36.4],[36.1,36.4]]);
+const GEO_URL='https://cdn.jsdelivr.net/gh/cihadturhan/tr-geojson@master/geo/tr-cities-utf8.json';
 
 function initMap(){
-  const svg = document.getElementById('mapsvg');
-  svg.innerHTML='';
-
-  // Defs
-  svg.innerHTML=`<defs>
-    <radialGradient id="seaG" cx="50%" cy="50%" r="80%">
-      <stop offset="0%" stop-color="#12203a"/>
-      <stop offset="100%" stop-color="#060b14"/>
-    </radialGradient>
-    <pattern id="gridP" patternUnits="userSpaceOnUse" width="50" height="50">
-      <path d="M50,0L0,0L0,50" fill="none" stroke="rgba(196,149,74,0.04)" stroke-width=".4"/>
-    </pattern>
-    <filter id="glow"><feGaussianBlur stdDeviation="1" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-  </defs>
-  <rect width="1800" height="900" fill="url(#seaG)"/>
-  <rect width="1800" height="900" fill="url(#gridP)"/>`;
-
-  // World countries
-  const wg = document.createElementNS('http://www.w3.org/2000/svg','g');
-  wg.setAttribute('id','world-layer');
-  COUNTRY_PATHS.forEach(c=>{
-    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
-    p.setAttribute('d',c.d);
-    p.setAttribute('fill','#2a2418');
-    p.setAttribute('stroke','#1a1208');
-    p.setAttribute('stroke-width','0.5');
-    p.dataset.country=c.id;
-    p.dataset.name=c.n;
-    wg.appendChild(p);
-  });
-  svg.appendChild(wg);
-
-  // TR outline
-  const trBase = document.createElementNS('http://www.w3.org/2000/svg','path');
-  trBase.setAttribute('d',TR_OUTLINE);
-  trBase.setAttribute('fill','#2a2418');
-  trBase.setAttribute('stroke','#0a0806');
-  trBase.setAttribute('stroke-width','0.5');
-  trBase.setAttribute('opacity','0.6');
-  svg.appendChild(trBase);
-
-  // Province layer
-  const pg = document.createElementNS('http://www.w3.org/2000/svg','g');
-  pg.setAttribute('id','prov-layer');
-  PROVINCES.forEach(p=>{
-    const el = document.createElementNS('http://www.w3.org/2000/svg','path');
-    el.setAttribute('d',p.d);
-    el.setAttribute('class','prov');
-    el.setAttribute('id','prov-'+p.id);
-    el.dataset.prov=p.id;
-    el.addEventListener('mouseenter',e=>showProvTip(p,e));
-    el.addEventListener('mouseleave',()=>hideProvTip());
-    el.addEventListener('click',()=>clickProv(p));
-    pg.appendChild(el);
-  });
-  svg.appendChild(pg);
-
-  // Labels
-  const lg = document.createElementNS('http://www.w3.org/2000/svg','g');
-  lg.setAttribute('id','label-layer');
-  svg.appendChild(lg);
-
-  // Pan/zoom
-  let drag=null;
-  svg.addEventListener('mousedown',e=>{
-    if(e.target.dataset.prov) return;
-    drag={sx:e.clientX,sy:e.clientY,vx:G.viewBox.x,vy:G.viewBox.y};
-    e.preventDefault();
-  });
-  svg.addEventListener('mousemove',e=>{
-    if(!drag) return;
-    const r=svg.getBoundingClientRect();
-    const dx=(e.clientX-drag.sx)/r.width*G.viewBox.w;
-    const dy=(e.clientY-drag.sy)/r.height*G.viewBox.h;
-    G.viewBox.x=drag.vx-dx; G.viewBox.y=drag.vy-dy;
-    updateViewBox();
-  });
-  svg.addEventListener('mouseup',()=>drag=null);
-  svg.addEventListener('mouseleave',()=>drag=null);
-  svg.addEventListener('wheel',e=>{
-    e.preventDefault();
-    const f=e.deltaY<0?.82:1.22;
-    const r=svg.getBoundingClientRect();
-    const mx=(e.clientX-r.left)/r.width;
-    const my=(e.clientY-r.top)/r.height;
-    const nw=clamp(G.viewBox.w*f,40,1800);
-    const nh=nw*(G.viewBox.h/G.viewBox.w);
-    G.viewBox.x+=( G.viewBox.w-nw)*mx;
-    G.viewBox.y+=(G.viewBox.h-nh)*my;
-    G.viewBox.w=nw; G.viewBox.h=nh;
-    updateViewBox();
-  },{passive:false});
-
-  renderMap();
+  leafletMap=L.map('leaflet-map',{center:[39,35.5],zoom:6,zoomControl:false,attributionControl:false});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:18,subdomains:'abcd'}).addTo(leafletMap);
+  fetch(GEO_URL).then(r=>r.json()).then(data=>{
+    provGeoLayer=L.geoJSON(data,{
+      style:f=>provStyle(f),
+      onEachFeature:(f,layer)=>{
+        const prov=PROV_BY_NAME[f.properties.name];
+        if(!prov) return;
+        layer.on('mouseover',e=>showProvTip(prov,e.originalEvent));
+        layer.on('mouseout',()=>hideProvTip());
+        layer.on('click',()=>clickProv(prov));
+      }
+    }).addTo(leafletMap);
+  }).catch(()=>{});
 }
 
-function updateViewBox(){
-  document.getElementById('mapsvg').setAttribute('viewBox',`${G.viewBox.x} ${G.viewBox.y} ${G.viewBox.w} ${G.viewBox.h}`);
-  renderMapLabels();
+function provStyle(f){
+  const prov=PROV_BY_NAME[f.properties.name];
+  if(!prov||!G) return {fillColor:'#1e1a14',color:'#0a0806',weight:0.5,fillOpacity:0.55};
+  const kind=getProvKind(prov.id);
+  const sel=G.selectedProv===prov.id;
+  let fillColor,color='#0a0806',weight=0.8,fillOpacity=0.82,dashArray=null;
+  if(G.mapMode==='econ'){
+    const ind=prov.ind;
+    if(kind==='capital'||kind==='owned'){fillColor=`hsl(42,${38+ind*4}%,${16+ind*2.5}%)`;color='#c4954a';weight=1;}
+    else if(kind==='claim'){fillColor=`hsl(38,${22+ind*3}%,${13+ind*2}%)`;color='#c4954a';dashArray='4,3';}
+    else{fillColor=`hsl(210,${8+ind*2}%,${10+ind*1.8}%)`;}
+  } else if(G.mapMode==='fronts'){
+    const frontIds=['ek','kon','krm','nev','aks','afn'];
+    const isFront=frontIds.includes(prov.id);
+    if(kind==='capital'||kind==='owned'){fillColor=isFront?'#8a1518':'#6a2020';color='#3a1010';}
+    else if(kind==='claim'){fillColor=isFront?'#8a5010':'#5a3a10';color='#c4954a';weight=1.2;dashArray='4,3';}
+    else{fillColor=isFront?'#3a1828':'#26202e';color=isFront?'#7a3060':'#2e2040';}
+  } else {
+    if(kind==='capital'||kind==='owned'){fillColor='#c43a3f';color='#5a1a1c';}
+    else if(kind==='claim'){fillColor='#7a5d2e';color='#c4954a';weight=1;dashArray='4,3';}
+    else{fillColor='#2e2820';color='#1a1208';}
+  }
+  if(sel){color='#e8b96a';weight=2.5;}
+  return{fillColor,color,weight,fillOpacity,dashArray};
 }
 
 function getProvKind(id){
@@ -1024,60 +903,8 @@ function getProvKind(id){
 }
 
 function renderMap(){
-  PROVINCES.forEach(p=>{
-    const el=document.getElementById('prov-'+p.id);
-    if(!el) return;
-    const kind = getProvKind(p.id);
-    el.removeAttribute('stroke-dasharray');
-    let fill,stroke,sw='0.12';
-
-    if(G.mapMode==='econ'){
-      // Ekonomi modu: sanayi yoğunluğuna göre renk
-      const ind=p.ind;
-      if(kind==='capital'||kind==='owned'){
-        fill=`hsl(42,${38+ind*4}%,${16+ind*2.5}%)`;
-        stroke='#c4954a'; sw='0.16';
-      } else if(kind==='claim'){
-        fill=`hsl(38,${22+ind*3}%,${13+ind*2}%)`;
-        stroke='#c4954a'; sw='0.15';
-        el.setAttribute('stroke-dasharray','0.6,0.4');
-      } else {
-        fill=`hsl(210,${8+ind*2}%,${10+ind*1.8}%)`;
-        stroke='#141010';
-      }
-    } else if(G.mapMode==='fronts'){
-      // Cephe modu: aktif çatışma bölgeleri vurgulu
-      const frontIds=['ek','kon','krm','nev','aks','afn'];
-      const isFront=frontIds.includes(p.id);
-      if(kind==='capital'||kind==='owned'){
-        fill=isFront?'#8a1518':'#6a2020'; stroke='#3a1010';
-      } else if(kind==='claim'){
-        fill=isFront?'#8a5010':'#5a3a10';
-        stroke='#c4954a'; sw='0.18';
-        el.setAttribute('stroke-dasharray','0.6,0.4');
-      } else {
-        fill=isFront?'#3a1828':'#26202e';
-        stroke=isFront?'#7a3060':'#2e2040';
-        sw=isFront?'0.22':'0.12';
-      }
-    } else {
-      // Siyasi mod (varsayılan)
-      if(kind==='capital'||kind==='owned'){ fill='#c43a3f'; stroke='#5a1a1c'; }
-      else if(kind==='claim'){ fill='#7a5d2e'; stroke='#c4954a'; sw='0.2'; el.setAttribute('stroke-dasharray','0.6,0.4'); }
-      else { fill='#3e3230'; stroke='#1a1208'; }
-    }
-
-    el.setAttribute('fill',fill);
-    el.setAttribute('stroke',stroke);
-    el.setAttribute('stroke-width',sw);
-    if(G.selectedProv===p.id){
-      el.setAttribute('stroke','#e8b96a');
-      el.setAttribute('stroke-width','0.35');
-      el.setAttribute('filter','url(#glow)');
-    } else { el.removeAttribute('filter'); }
-  });
+  if(provGeoLayer) provGeoLayer.setStyle(f=>provStyle(f));
   updateMapLegend();
-  renderMapLabels();
 }
 
 function updateMapLegend(){
@@ -1100,31 +927,8 @@ function updateMapLegend(){
     el.innerHTML=`
       <div class="ml-row"><div class="ml-sw" style="background:#c43a3f"></div> Kendi toprağı</div>
       <div class="ml-row"><div class="ml-sw" style="background:#7a5d2e;border-style:dashed;border-color:#c4954a"></div> Talep edilen</div>
-      <div class="ml-row"><div class="ml-sw" style="background:#5a4055"></div> Düşman devlet</div>
-      <div class="ml-row"><div class="ml-sw" style="background:#3a6a9a"></div> Müttefik</div>`;
+      <div class="ml-row"><div class="ml-sw" style="background:#3e3230"></div> Düşman devlet</div>`;
   }
-}
-
-function renderMapLabels(){
-  const lg=document.getElementById('label-layer');
-  if(!lg) return;
-  lg.innerHTML='';
-  if(G.viewBox.w>500) return; // too zoomed out
-  const fs=Math.max(1.2,G.viewBox.w*0.005);
-  PROVINCES.forEach(p=>{
-    const kind=getProvKind(p.id);
-    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
-    t.setAttribute('x',p.cx); t.setAttribute('y',p.cy+0.4);
-    t.setAttribute('text-anchor','middle');
-    t.setAttribute('font-family','Cinzel, serif');
-    t.setAttribute('font-size',fs+'px');
-    t.setAttribute('font-weight','600');
-    t.setAttribute('letter-spacing','.04em');
-    t.setAttribute('pointer-events','none');
-    t.setAttribute('fill', kind==='owned'||kind==='capital'?'#fff': kind==='claim'?'#e8b96a':'#8a7a60');
-    t.textContent=p.name;
-    lg.appendChild(t);
-  });
 }
 
 function showProvTip(p,e){
@@ -1143,7 +947,7 @@ function showProvTip(p,e){
   tip.style.left=(e.clientX+14)+'px';
   tip.style.top=(e.clientY+14)+'px';
 }
-function hideProvTip(){ document.getElementById('prov-tip').style.display='none'; }
+function hideProvTip(){document.getElementById('prov-tip').style.display='none';}
 
 function clickProv(p){
   G.selectedProv=p.id;
@@ -1151,16 +955,9 @@ function clickProv(p){
   setTab('hq');
 }
 
-function mapZoom(f){
-  const cx=G.viewBox.x+G.viewBox.w/2, cy=G.viewBox.y+G.viewBox.h/2;
-  const nw=clamp(G.viewBox.w*f,40,1800);
-  const nh=nw*(G.viewBox.h/G.viewBox.w);
-  G.viewBox.x=cx-nw/2; G.viewBox.y=cy-nh/2;
-  G.viewBox.w=nw; G.viewBox.h=nh;
-  updateViewBox();
-}
-function mapReset(){ G.viewBox={x:1100,y:230,w:280,h:200}; updateViewBox(); }
-function mapWorld(){ G.viewBox={x:0,y:50,w:1800,h:700}; updateViewBox(); }
+function mapZoom(f){f<1?leafletMap.zoomIn():leafletMap.zoomOut();}
+function mapReset(){leafletMap.setView([39,35.5],6);}
+function mapWorld(){leafletMap.setView([30,20],2);}
 function setMapMode(m){
   G.mapMode=m;
   ['political','fronts','econ'].forEach(x=>document.getElementById('mm-'+x)?.classList.toggle('active',x===m));
