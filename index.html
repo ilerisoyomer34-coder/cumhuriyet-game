@@ -2561,7 +2561,7 @@ function resolveElection(elecId){
 // SAVAŞ SİSTEMİ
 // ═══════════════════════════════════════════════════════════════
 
-const ATTACK_TYPES = [
+const WAR_ATTACK_TYPES = [
   {id:'infantry',   name:'Piyade Saldırısı',    icon:'⚔',  cost:{treasury:500_000, manpower:200},  cooldown:1, power:15, casualtyUs:120, casualtyThem:180, desc:'Kara kuvvetleriyle klasik taarruz',     req:null},
   {id:'artillery',  name:'Topçu Bombardımanı',  icon:'💥', cost:{treasury:800_000, steel:50},       cooldown:2, power:22, casualtyUs:30,  casualtyThem:280, desc:'Uzun menzilli ağır topçu atışı',       req:null},
   {id:'naval',      name:'Deniz Harekatı',       icon:'⚓', cost:{treasury:1_200_000, oil:200},     cooldown:3, power:30, casualtyUs:10,  casualtyThem:320, desc:'Sahil ve liman hedeflerini vur',        req:'navy'},
@@ -2634,7 +2634,7 @@ function declareWar(code){
 
 function performAttack(warId, typeId){
   const war = G.wars.find(w=>w.id===warId);
-  const type = ATTACK_TYPES.find(t=>t.id===typeId);
+  const type = WAR_ATTACK_TYPES.find(t=>t.id===typeId);
   if(!war||!type) return;
 
   // Cooldown kontrolü
@@ -2827,7 +2827,7 @@ function renderWar(header,tabs,body){
         TAARRUZ KOMUTASI
       </div>
       <div class="attack-grid">
-        ${ATTACK_TYPES.map(t=>{
+        ${WAR_ATTACK_TYPES.map(t=>{
           const cd = (war.attackCooldowns[t.id]||0);
           const canUse = cd<=0;
           const costParts = [
@@ -2948,10 +2948,7 @@ function tryLoadSave(){
   } catch(err){ return null; }
 }
 
-// nsStart'ı kayıt kontrolüyle güncelle
-const _origNsStart=nsStart;
-// (nsStart zaten tanımlı, aşağıda override edildi)
-// Kayıt kontrolü nsStart içinde yapılıyor - aşağıya alındı.
+// nsStart kayıt kontrolü aşağıdaki IIFE içinde override edildi.
 
 // ═══════════════════════════════════════════════════════════════
 // KLAVYE KISAYOLLARI
