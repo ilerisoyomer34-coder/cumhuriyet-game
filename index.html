@@ -2144,7 +2144,7 @@ function renderDiplo(header,tabs,body){
         ${r.status==='Düşman'?btn('Ateşkes Teklif Et',`proposeCeasefire('${r.code}')`):''}
         ${r.status!=='Müttefik'&&r.status!=='Düşman'?btn('Anlaşma Öner',`proposeAgreement('${r.code}')`, 'ghost sm'):''}
         ${r.status==='Müttefik'?btn('İttifakı Yenile',`renewAlliance('${r.code}')`,'green sm'):''}
-        ${r.status!=='Müttefik'&&!G.wars.find(w=>w.code===r.code&&w.status==='active')?btn('Savaş İlan Et',`declareWar('${r.code}')`, 'red sm'):''}
+        ${r.status!=='Müttefik'&&!G.wars.find(w=>w.code===r.code&&w.status==='active')?btn('⚔ Savaş İlan Et',`confirmDeclareWar('${r.code}')`, 'red sm'):''}
         ${G.wars.find(w=>w.code===r.code&&w.status==='active')?`<button class="btn red sm" onclick="setTab('war')">⚔ Savaş Sürüyor →</button>`:''}
       </div>
     </div>`).join(''))}
@@ -2574,12 +2574,43 @@ const SHIP_TYPES = [
   {id:'battleships', name:'Savaş Gemisi', icon:'⚔', cost:65_000_000, steel:1200,days:200, attack:12,defense:10, desc:'Ağır zırhlı amiral gemisi'},
 ];
 
-function declareWar(code){
+function confirmDeclareWar(code){
   const r = G.diplo.relations.find(x=>x.code===code);
   if(!r) return;
   if(G.wars.find(w=>w.code===code&&w.status==='active')){ showToast('SAVAŞ','Zaten savaştasınız',r.name+' ile çatışma sürüyor.'); return; }
   if(r.status==='Müttefik'){ showToast('DİPLOMASİ','Müttefike savaş ilan edilemez','Önce ittifakı bozun.'); return; }
   if(G.res.treasury < 5_000_000){ showToast('MALİYE','Yetersiz hazine','Savaş ilanı için en az ₺5M gerekli.'); return; }
+  // Onay modalı göster
+  document.getElementById('modal-content').innerHTML=`
+    <div class="mc tl"></div><div class="mc tr"></div><div class="mc bl"></div><div class="mc br"></div>
+    <div class="modal-tag" style="color:var(--red2)">⚠ SAVAŞ İLANI — GERİ ALINAMAZ</div>
+    <div class="modal-title" style="color:var(--red2)">${r.name} ile Savaş</div>
+    <div class="modal-body">
+      <strong style="color:var(--ink)">${r.name}</strong> devletine resmen savaş ilan etmek üzeresiniz.<br/><br/>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;font-size:12px">
+        <div style="background:rgba(196,58,63,.1);border:1px solid var(--red);padding:8px 10px">
+          <div style="color:var(--red2);font-family:'Bebas Neue';letter-spacing:.1em;margin-bottom:4px">MALİYET</div>
+          <div>₺5.000.000 seferberlik</div>
+          <div style="color:var(--inkdim)">+₺200K/gün savaş gideri</div>
+        </div>
+        <div style="background:rgba(196,149,74,.07);border:1px solid var(--line);padding:8px 10px">
+          <div style="color:var(--gold2);font-family:'Bebas Neue';letter-spacing:.1em;margin-bottom:4px">DÜŞMAN GÜCÜ</div>
+          <div>${r.mil}</div>
+          <div style="color:var(--inkdim)">İlişki: ${r.rel>=0?'+':''}${r.rel}</div>
+        </div>
+      </div>
+      Bu karar uluslararası dengeleri sarsacak ve ekonomiye ek yük getirecektir.
+    </div>
+    <div class="modal-actions">
+      <button class="btn ghost" onclick="closeModal()">Vazgeç</button>
+      <button class="btn red" onclick="closeModal();declareWar('${code}')">⚔ Savaş İlan Et!</button>
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+}
+
+function declareWar(code){
+  const r = G.diplo.relations.find(x=>x.code===code);
+  if(!r) return;
   G.res.treasury -= 5_000_000;
   r.status = 'Düşman'; r.rel = Math.min(r.rel, -60);
   const warId = 'w'+Date.now();
@@ -2697,68 +2728,128 @@ function buildShip(typeId){
 function renderWar(header,tabs,body){
   renderHeader(header,'Savaş Odası — Harp Merkezi','Aktif Savaşlar & Saldırı Komutası','Cephe durumu, kayıplar, taarruz planı');
   const activeWars = G.wars.filter(w=>w.status==='active');
+
   if(activeWars.length===0){
-    body.innerHTML=sectHTML('Savaş Odası',`<div style="padding:16px;text-align:center;color:var(--inkdim);font-size:12px">
-      <div style="font-family:Cinzel,serif;font-size:16px;color:var(--gold2);margin-bottom:8px">Barış Dönemi</div>
-      Şu an aktif savaş yok. Savaş ilan etmek için Dışişleri sekmesine gidin.<br/>
-      <div class="btn-row" style="justify-content:center;margin-top:12px">
-        ${btn('Dışişleri →','setTab(\'diplo\')','ghost sm')}
-      </div>
-    </div>`);
     const pastWars = G.wars.filter(w=>w.status!=='active');
-    if(pastWars.length){
-      body.innerHTML+=sectHTML('Geçmiş Çatışmalar',pastWars.map(w=>`
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:baseline">
+    body.innerHTML=`<div class="sect">
+      <div style="text-align:center;padding:20px 0">
+        <div style="font-size:32px;margin-bottom:8px">🕊</div>
+        <div style="font-family:Cinzel,serif;font-size:15px;color:var(--gold2);margin-bottom:6px">Barış Dönemi</div>
+        <div style="font-size:11px;color:var(--inkdim);margin-bottom:14px">Aktif savaş yok. Savaş ilan etmek için<br>Dışişleri sekmesini kullanın.</div>
+        ${btn('Dışişleri →',"setTab('diplo')",'ghost sm')}
+      </div>
+    </div>`+(pastWars.length?sectHTML('Geçmiş Çatışmalar',pastWars.map(w=>{
+      const rel=G.diplo.relations.find(x=>x.code===w.code);
+      return `<div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+          <div style="display:flex;align-items:center;gap:8px">
+            ${rel?`<div style="width:14px;height:10px;background:${rel.color};border:1px solid var(--line);flex-shrink:0"></div>`:''}
             <span class="card-title" style="margin-bottom:0">${w.name}</span>
-            ${pill(w.status==='victory'?'Zafer':w.status==='defeat'?'Yenilgi':'Ateşkes',w.status==='victory'?'g':w.status==='defeat'?'r':'')}
           </div>
-          ${irowHTML('Başlangıç',w.since)}
-          ${irowHTML('Kayıplarımız',fmtNum(w.casualties.us)+' asker')}
-          ${irowHTML('Düşman kaybı',fmtNum(w.casualties.them)+' asker')}
-        </div>`).join(''));
-    }
+          ${pill(w.status==='victory'?'Zafer':w.status==='defeat'?'Yenilgi':'Ateşkes',w.status==='victory'?'g':w.status==='defeat'?'r':'')}
+        </div>
+        ${irowHTML('Başlangıç',w.since)}
+        ${irowHTML('Savaş puanı',`<span class="${w.warScore>=0?'pos':'neg'}">${w.warScore>=0?'+':''}${w.warScore}</span>`)}
+        ${irowHTML('Kayıplarımız',fmtNum(w.casualties.us)+' asker')}
+        ${irowHTML('Düşman kaybı',fmtNum(w.casualties.them)+' asker')}
+      </div>`;
+    }).join('')):'');
     return;
   }
+
   let html='';
   activeWars.forEach(war=>{
-    const usShare = war.ourScore/(war.ourScore+war.theirScore)*100;
-    const themShare = 100-usShare;
+    const rel = G.diplo.relations.find(x=>x.code===war.code);
+    const us = clamp(war.ourScore,0,200);
+    const them = clamp(war.theirScore,0,200);
+    const total = us+them||1;
+    const usShare = (us/total*100).toFixed(1);
+    const themShare = (them/total*100).toFixed(1);
+    // Savaş puanı bar: -100..+100 → 0..100%
+    const scorePct = clamp((war.warScore+100)/2, 0, 100);
+    const scoreColor = war.warScore>=30?'var(--green2)':war.warScore<=-30?'var(--red2)':'var(--gold2)';
+    const frontlineDivs = G.army.divisions.filter(d=>d.frontline).length;
+
     html+=`<div class="war-card">
-      <div class="war-nation">${war.name}</div>
-      <div class="war-since">Savaş başladı: ${war.since}</div>
-      <div class="war-score-row">
-        <span class="war-score-lbl" style="color:var(--red2)">BİZ</span>
-        <div class="war-score-bar">
-          <div class="war-score-us" style="flex:${usShare.toFixed(1)}"></div>
-          <div class="war-score-them" style="flex:${themShare.toFixed(1)}"></div>
-        </div>
-        <span class="war-score-lbl" style="color:var(--blue2)">ONLAR</span>
+      <!-- Başlık -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+        ${rel?`<div style="width:20px;height:14px;background:${rel.color};border:1px solid rgba(0,0,0,.4);flex-shrink:0"></div>`:''}
+        <div class="war-nation">${war.name}</div>
+        ${pill('⚔ SAVAŞ','r')}
       </div>
-      ${irowHTML('Savaş puanı',`<span class="v ${war.warScore>=0?'pos':'neg'}">${war.warScore>=0?'+':''}${war.warScore}</span>`)}
-      ${irowHTML('Kayıplarımız',fmtNum(war.casualties.us)+' asker')}
-      ${irowHTML('Düşman kaybı',fmtNum(war.casualties.them)+' asker')}
-      <div class="stitle" style="margin-top:10px"><span>Saldırı Seçenekleri</span></div>
+      <div class="war-since">${war.since} tarihinden beri • Cephede: ${frontlineDivs} tümen • Ordu morali: %${G.army.morale}</div>
+
+      <!-- Güç dengesi barı -->
+      <div style="margin:10px 0 4px">
+        <div style="display:flex;justify-content:space-between;font-size:9px;font-family:'IBM Plex Mono';margin-bottom:3px">
+          <span style="color:var(--red2)">BİZ %${usShare}</span>
+          <span style="color:var(--inkdim)">GÜÇ DENGESİ</span>
+          <span style="color:var(--blue2)">ONLAR %${themShare}</span>
+        </div>
+        <div class="war-score-bar">
+          <div class="war-score-us" style="flex:${usShare}"></div>
+          <div class="war-score-them" style="flex:${themShare}"></div>
+        </div>
+      </div>
+
+      <!-- Savaş puanı barı -->
+      <div style="margin:8px 0">
+        <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:3px">
+          <span style="color:var(--inkdim)">SAVAŞ PUANI</span>
+          <span style="font-family:'IBM Plex Mono';color:${scoreColor};font-weight:700">${war.warScore>=0?'+':''}${war.warScore} / 100</span>
+        </div>
+        <div style="height:6px;background:var(--bg);border:1px solid var(--line);overflow:hidden;position:relative">
+          <div style="position:absolute;left:50%;top:0;width:1px;height:100%;background:var(--line);z-index:1"></div>
+          <div style="height:100%;background:${scoreColor};width:${Math.abs(war.warScore)}%;${war.warScore>=0?'margin-left:50%':'margin-left:'+(50-Math.abs(war.warScore))+'%'};transition:width .4s,margin .4s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:8px;color:var(--inkdim);margin-top:2px">
+          <span>← Yenilgi (-100)</span><span>Zafer (100) →</span>
+        </div>
+      </div>
+
+      <!-- İstatistikler -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:8px 0">
+        <div style="background:rgba(196,58,63,.08);border:1px solid rgba(196,58,63,.2);padding:6px 8px;text-align:center">
+          <div style="font-family:'IBM Plex Mono';font-size:14px;font-weight:700;color:var(--red2)">${fmtNum(war.casualties.us)}</div>
+          <div style="font-size:8px;color:var(--inkdim);font-family:'Bebas Neue';letter-spacing:.12em">BİZİM KAYIP</div>
+        </div>
+        <div style="background:rgba(90,154,202,.08);border:1px solid rgba(90,154,202,.2);padding:6px 8px;text-align:center">
+          <div style="font-family:'IBM Plex Mono';font-size:14px;font-weight:700;color:var(--blue2)">${fmtNum(war.casualties.them)}</div>
+          <div style="font-size:8px;color:var(--inkdim);font-family:'Bebas Neue';letter-spacing:.12em">DÜŞMAN KAYBI</div>
+        </div>
+      </div>
+
+      <!-- Saldırı seçenekleri -->
+      <div style="font-family:'Bebas Neue';font-size:11px;letter-spacing:.18em;color:var(--gold2);margin:10px 0 6px;padding-top:8px;border-top:1px solid rgba(196,149,74,.15)">
+        TAARRUZ KOMUTASI
+      </div>
       <div class="attack-grid">
         ${ATTACK_TYPES.map(t=>{
           const cd = (war.attackCooldowns[t.id]||0);
           const canUse = cd<=0;
-          const costStr = [
+          const costParts = [
             t.cost.treasury?`₺${(t.cost.treasury/1e6).toFixed(1)}M`:'',
             t.cost.manpower?`${t.cost.manpower} asker`:'',
             t.cost.oil?`${t.cost.oil} petrol`:'',
             t.cost.steel?`${t.cost.steel} çelik`:'',
+            t.cost.food?`${t.cost.food} gıda`:'',
           ].filter(Boolean).join(' / ');
-          return `<button class="attack-btn" ${canUse?'':`disabled`} onclick="performAttack('${war.id}','${t.id}')">
+          const reqCheck = t.req==='navy'?(G.navy.frigates+G.navy.destroyers+G.navy.battleships)<1:
+                           t.req==='aircraft'?G.equipment.aircraft.stock<5:false;
+          const reqLabel = reqCheck?(t.req==='navy'?'⚠ Gemi yok':'⚠ Uçak yok'):'';
+          return `<button class="attack-btn" ${canUse&&!reqCheck?'':`disabled`} onclick="performAttack('${war.id}','${t.id}')">
             <span class="at">${t.icon} ${t.name}</span>
             <span class="ac">${t.desc}</span>
-            <span class="acd">${canUse?costStr:'⏱ '+cd+' gün sonra'}</span>
+            <span class="acd">${reqLabel||(!canUse?'⏱ '+cd+' gün sonra':costParts)}</span>
           </button>`;
         }).join('')}
       </div>
-      <div class="btn-row" style="margin-top:10px">
+
+      <!-- Alt butonlar -->
+      <div class="btn-row" style="margin-top:12px;border-top:1px solid rgba(196,149,74,.1);padding-top:10px">
+        ${btn('↑ Takviye Gönder','reinforceFront()','sm',G.army.divisions.filter(d=>!d.frontline).length===0)}
         ${btn('Ateşkes İste',`ceaseFireWar('${war.id}')`, 'ghost sm')}
-        ${btn('Zaferi İlan Et',`endWar('${war.id}','victory')`, 'green sm', war.warScore<80)}
+        ${war.warScore>=60?btn('🏆 Zaferi İlan Et',`endWar('${war.id}','victory')`, 'green sm'):''}
       </div>
     </div>`;
   });
@@ -2845,6 +2936,11 @@ function tryLoadSave(){
     data.date=new Date(data.date);
     data.tickInterval=null;
     data.speed=0;
+    // Migration: yeni alanlar yoksa ekle
+    if(!data.wars) data.wars=[];
+    if(!data.navy) data.navy={frigates:2,destroyers:1,submarines:0,battleships:0,building:[]};
+    if(!data.navy.building) data.navy.building=[];
+    data.wars.forEach(w=>{ if(!w.attackCooldowns) w.attackCooldowns={}; if(!w.casualties) w.casualties={us:0,them:0}; });
     return data;
   } catch(err){ return null; }
 }
