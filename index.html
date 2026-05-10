@@ -74,7 +74,7 @@ button:active{transform:scale(.97)}
 .leaflet-container{background:#060b14}
 .leaflet-tile-pane{opacity:.92}
 .maptools{position:absolute;top:10px;left:10px;display:flex;flex-direction:column;gap:6px;z-index:1000}
-.prov-label.leaflet-tooltip{background:transparent!important;border:none!important;box-shadow:none!important;padding:0!important;font-family:'Cinzel',serif;font-size:10px;font-weight:600;color:#e2d4b8;text-shadow:0 1px 4px #000,0 0 8px #000;white-space:nowrap;pointer-events:none}
+.prov-label.leaflet-tooltip{background:rgba(12,8,4,.72)!important;border:1px solid rgba(196,149,74,.18)!important;box-shadow:none!important;padding:1px 5px!important;border-radius:2px!important;font-family:'Cinzel',serif;font-size:9px;font-weight:600;color:#c8b890;letter-spacing:.05em;white-space:nowrap;pointer-events:none}
 .prov-label.leaflet-tooltip::before{display:none!important}
 .mapbtn{background:rgba(14,11,7,.88);border:1px solid var(--line);color:var(--inkdim);padding:6px 12px;font-family:'Bebas Neue';font-size:12px;letter-spacing:.12em;transition:all .15s;backdrop-filter:blur(6px)}
 .mapbtn:hover,.mapbtn.active{color:var(--gold2);border-color:var(--golddim);background:rgba(196,149,74,.1)}
@@ -82,7 +82,7 @@ button:active{transform:scale(.97)}
 .mapmode-row .mapbtn{border-right:0}.mapmode-row .mapbtn:last-child{border-right:1px solid var(--line)}
 .mapzoom{display:flex}
 .mapzoom .mapbtn{padding:5px 10px;border-right:0}.mapzoom .mapbtn:last-child{border-right:1px solid var(--line)}
-.maplegend{position:absolute;bottom:10px;left:10px;background:rgba(14,11,7,.88);border:1px solid var(--line);padding:10px 12px;backdrop-filter:blur(6px);z-index:3}
+.maplegend{position:absolute;bottom:10px;left:10px;background:rgba(14,11,7,.88);border:1px solid var(--line);padding:10px 12px;backdrop-filter:blur(6px);z-index:1000}
 .ml-title{font-family:'Bebas Neue';font-size:11px;letter-spacing:.16em;color:var(--gold2);margin-bottom:6px}
 .ml-row{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink2);padding:2px 0}
 .ml-sw{width:12px;height:9px;border:1px solid rgba(0,0,0,.4)}
@@ -743,7 +743,7 @@ function nsStart(){
   const name = document.getElementById('presname').value.trim();
   if(name.length<2){ document.getElementById('presname').style.borderBottomColor='var(--red)'; return; }
   document.getElementById('namescreen').style.display='none';
-  document.getElementById('app').style.display='';
+  document.getElementById('app').style.display='grid';
   G = makeInitialState(name);
   document.getElementById('tb-leader').textContent = 'Cumhurbaşkanı '+name;
   renderAll();
@@ -2469,7 +2469,7 @@ function showShortcutsHelp(){
       const tsStr=ts?new Date(ts).toLocaleString('tr-TR'):'bilinmiyor';
       if(confirm(`"${name}" adlı kayıtlı oyun bulundu.\nKayıt tarihi: ${tsStr}\n\nDevam etmek istiyor musunuz?\n(İptal = Yeni oyun başlat)`)){
         document.getElementById('namescreen').style.display='none';
-        document.getElementById('app').style.display='';
+        document.getElementById('app').style.display='grid';
         G=save;
         document.getElementById('tb-leader').textContent='Cumhurbaşkanı '+G.president;
         renderAll();
