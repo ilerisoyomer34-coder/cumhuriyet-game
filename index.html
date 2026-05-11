@@ -2833,46 +2833,78 @@ function performAttack(warId, typeId){
   }
 
   // Savaş bitti mi?
-  if(war.warScore >= 80){ endWar(warId,'victory'); }
-  else if(war.warScore <= -80){ endWar(warId,'defeat'); }
+  if(war.warScore >= 60){ endWar(warId,'victory'); }
+  else if(war.warScore <= -60){ endWar(warId,'defeat'); }
   else { renderPanel(); }
 }
 
 function endWar(warId, result){
   const war = G.wars.find(w=>w.id===warId);
-  if(!war) return;
+  if(!war||war.status!=='active') return;
   war.status = result;
-  const r = G.diplo.relations.find(x=>x.code===war.code);
+  const rIdx = G.diplo.relations.findIndex(x=>x.code===war.code);
+  const r = rIdx>=0 ? G.diplo.relations[rIdx] : null;
+
   if(result==='victory'){
-    if(r){ r.rel=clamp(r.rel+20,-100,100); r.status='Soğuk'; }
+    // ── 1. Tüm talep edilen iller otomatik alınır ──
+    const claimConquered = G.claimedProvs.slice();
+    claimConquered.forEach(id=>{
+      const p=PROVINCES.find(x=>x.id===id);
+      if(p && !G.ownedProvs.includes(id)){
+        G.ownedProvs.push(id);
+        conquerProvince(p);
+      }
+    });
+    G.claimedProvs=[];
+
+    // ── 2. Savaş puanına göre ekstra düşman il al ──
+    const extra = PROVINCES.filter(p=>getProvKind(p.id)==='enemy');
+    extra.sort((a,b)=>b.ind-a.ind);
+    const extraCount = Math.min(extra.length, Math.max(3, Math.floor(war.warScore/10)));
+    extra.slice(0,extraCount).forEach(p=>{
+      if(!G.ownedProvs.includes(p.id)){
+        G.ownedProvs.push(p.id);
+        conquerProvince(p);
+      }
+    });
+
+    // ── 3. Yenilen ülkeyi listeden sil ──
+    if(rIdx>=0) G.diplo.relations.splice(rIdx,1);
+    // İttifak antlaşması varsa kaldır
+    G.diplo.treaties = G.diplo.treaties.filter(t=>t.with!==war.name);
+
+    // ── 4. Kaynaklar ve onay ──
     G.warSupport = clamp(G.warSupport-10,0,100);
-    G.approval = clamp(G.approval+8,0,100);
-    G.legitimacy = clamp(G.legitimacy+5,0,100);
-    G.res.treasury += 15_000_000;
-    // Düşman devletin talep edilen illerini fethedelim
-    const conquered = PROVINCES.filter(p=>{
-      const kind=getProvKind(p.id);
-      return (kind==='claim'||kind==='enemy') && !G.ownedProvs.includes(p.id);
-    });
-    // Savaş puanına göre fethedilen il sayısı (her 20 puan = 1 il)
-    const toConquer = Math.min(conquered.length, Math.max(1, Math.floor(war.warScore/20)));
-    // En yüksek sanayili iller önce fethedilsin
-    conquered.sort((a,b)=>b.ind-a.ind);
-    conquered.slice(0,toConquer).forEach(p=>{
-      if(!G.ownedProvs.includes(p.id)) G.ownedProvs.push(p.id);
-      G.claimedProvs=G.claimedProvs.filter(x=>x!==p.id);
-      conquerProvince(p);
-    });
-    addEvent('SAVAŞ','g',`${war.name} ile zafer! ${toConquer} il fethedildi!`,`Savaş galibiyetle sona erdi. ${toConquer} vilayet Cumhuriyet'e katıldı. +₺15M savaş tazminatı.`);
+    G.approval = clamp(G.approval+12,0,100);
+    G.legitimacy = clamp(G.legitimacy+8,0,100);
+    G.stability = clamp(G.stability+5,0,100);
+    G.res.treasury += 25_000_000;
+
+    const totalConq = claimConquered.length + extraCount;
+    addEvent('SAVAŞ','g',`🏆 ${war.name} yenildi! ${totalConq} il fethedildi!`,
+      `${war.name} devleti çöktü ve topraklardan silindi. ${totalConq} vilayet Cumhuriyet'e katıldı. Savaş tazminatı: +₺25M.`);
+    showToast('ZAFER',`${war.name} yenildi!`,`${totalConq} il fethedildi. Ülke diplo listesinden silindi.`);
+
   } else if(result==='defeat'){
-    if(r){ r.rel=clamp(r.rel-10,-100,-30); }
+    // Yenilgide bazı kendi illerimiz kaybedilebilir
+    if(r){ r.rel=clamp(r.rel-10,-100,-30); r.status='Düşman'; }
+    const lostCount = Math.min(G.ownedProvs.filter(id=>id!=='ank').length, 2);
+    const toLoose = G.ownedProvs.filter(id=>id!=='ank').slice(-lostCount);
+    toLoose.forEach(id=>{
+      G.ownedProvs=G.ownedProvs.filter(x=>x!==id);
+      G.claimedProvs.push(id);
+    });
     G.warSupport = clamp(G.warSupport-25,0,100);
-    G.approval = clamp(G.approval-12,0,100);
-    G.stability = clamp(G.stability-8,0,100);
-    addEvent('SAVAŞ','r',`${war.name} karşısında yenilgi`,'Güçler geri çekiliyor. Moral çöktü. Barış masasına oturma zorunluluğu doğdu.');
+    G.approval = clamp(G.approval-15,0,100);
+    G.stability = clamp(G.stability-10,0,100);
+    G.army.morale = clamp(G.army.morale-20,0,100);
+    addEvent('SAVAŞ','r',`${war.name} karşısında yenilgi`,`Güçler geri çekildi. ${lostCount} il kaybedildi. Barış şartları ağır.`);
+    showToast('YENİLGİ',`${war.name} savaşını kaybettik`,`${lostCount} il elden çıktı.`);
   } else {
+    if(r){ r.status='Soğuk'; r.rel=clamp(r.rel+15,-100,100); }
     addEvent('SAVAŞ','',`${war.name} ile ateşkes`,'Çatışma durakladı. Taraflar müzakere masasına oturuyor.');
   }
+  renderMap();
   renderAll();
 }
 
@@ -3019,7 +3051,7 @@ function renderWar(header,tabs,body){
       <div class="btn-row" style="margin-top:12px;border-top:1px solid rgba(196,149,74,.1);padding-top:10px">
         ${btn('↑ Takviye Gönder','reinforceFront()','sm',G.army.divisions.filter(d=>!d.frontline).length===0)}
         ${btn('Ateşkes İste',`ceaseFireWar('${war.id}')`, 'ghost sm')}
-        ${war.warScore>=60?btn('🏆 Zaferi İlan Et',`endWar('${war.id}','victory')`, 'green sm'):''}
+        ${war.warScore>=40?btn('🏆 Zaferi İlan Et',`endWar('${war.id}','victory')`, 'green sm'):pill(`Zafer için ${60-war.warScore} puan daha`)}
       </div>
     </div>`;
   });
