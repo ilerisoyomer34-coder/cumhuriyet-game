@@ -973,6 +973,40 @@ function provStyle(f){
   return{fillColor,color,weight,fillOpacity,dashArray};
 }
 
+function conquerProvince(p){
+  // Nüfus transferi
+  const pop = p.pop * 1000;
+  G.population += pop;
+  G.populationD += Math.round(pop * 0.0004);
+
+  // Sanayi transferi (ind = sanayi seviyesi)
+  const ind = p.ind;
+  if(ind >= 6){
+    G.industry.milFact += 1;
+    G.res.steelD += ind * 4;
+  }
+  if(ind >= 3){
+    G.industry.civFact += 1;
+  }
+  // Günlük gelir artışı
+  G.res.treasuryD += ind * 60_000 + Math.round(pop * 0.005);
+  // İnsan gücü üretimi artışı
+  G.res.manpowerD += Math.round(pop * 0.001);
+  // Gıda üretimi (tarım ili)
+  G.res.foodD += Math.round(pop * 0.002) + ind;
+  // Anlık yağma (tek seferlik)
+  const loot = ind * 800_000 + Math.round(pop * 8);
+  G.res.treasury += loot;
+  // Onay ve meşruiyet
+  G.approval = clamp(G.approval + 3, 0, 100);
+  G.legitimacy = clamp(G.legitimacy + 2, 0, 100);
+  G.happiness = clamp(G.happiness + 1, 0, 100);
+
+  addEvent('ZAFER','g',`${p.name} ele geçirildi!`,
+    `${p.name} Cumhuriyet topraklarına katıldı. Nüfus: +${fmtNum(pop)} · Sanayi: ${ind} · Hazine: +${fmtMoney(loot)} (yağma). Günlük gelir +${fmtMoney(ind*60_000)} artacak.`);
+  renderMap();
+}
+
 function getProvKind(id){
   if(id==='ank') return 'capital';
   if(G.ownedProvs.includes(id)) return 'owned';
@@ -1652,9 +1686,9 @@ function attackProv(id,type='quick'){
     G.stability=clamp(G.stability-2,0,100);
     G.army.morale=clamp(G.army.morale+4,0,100);
     G.res.manpower=Math.max(0,G.res.manpower-losses);
-    addEvent('ZAFER','g',`${p.name} ele geçirildi`,`${atkType.name} başarıya ulaştı. ${p.name} Cumhuriyet kontrolüne geçti. Kayıp: ${fmtNum(losses)} asker. Başarı ihtimali %${Math.round(odds*100)} idi.`);
+    conquerProvince(p);
     G.selectedProv=id;
-    showToast('ZAFER',`${p.name} alındı`,`${atkType.name} başarıyla tamamlandı.`);
+    showToast('ZAFER',`${p.name} alındı! 🏴`,`${atkType.name} başarıyla tamamlandı. Tüm kaynaklar Cumhuriyet'e geçti.`);
   }else{
     G.warSupport=clamp(G.warSupport-4,0,100);
     G.stability=clamp(G.stability-4,0,100);
@@ -2696,7 +2730,21 @@ function endWar(warId, result){
     G.approval = clamp(G.approval+8,0,100);
     G.legitimacy = clamp(G.legitimacy+5,0,100);
     G.res.treasury += 15_000_000;
-    addEvent('SAVAŞ','g',`${war.name} ile zafer!`,'Savaş galibiyetle sona erdi. Uluslararası prestij arttı. +₺15M savaş tazminatı.');
+    // Düşman devletin talep edilen illerini fethedelim
+    const conquered = PROVINCES.filter(p=>{
+      const kind=getProvKind(p.id);
+      return (kind==='claim'||kind==='enemy') && !G.ownedProvs.includes(p.id);
+    });
+    // Savaş puanına göre fethedilen il sayısı (her 20 puan = 1 il)
+    const toConquer = Math.min(conquered.length, Math.max(1, Math.floor(war.warScore/20)));
+    // En yüksek sanayili iller önce fethedilsin
+    conquered.sort((a,b)=>b.ind-a.ind);
+    conquered.slice(0,toConquer).forEach(p=>{
+      if(!G.ownedProvs.includes(p.id)) G.ownedProvs.push(p.id);
+      G.claimedProvs=G.claimedProvs.filter(x=>x!==p.id);
+      conquerProvince(p);
+    });
+    addEvent('SAVAŞ','g',`${war.name} ile zafer! ${toConquer} il fethedildi!`,`Savaş galibiyetle sona erdi. ${toConquer} vilayet Cumhuriyet'e katıldı. +₺15M savaş tazminatı.`);
   } else if(result==='defeat'){
     if(r){ r.rel=clamp(r.rel-10,-100,-30); }
     G.warSupport = clamp(G.warSupport-25,0,100);
