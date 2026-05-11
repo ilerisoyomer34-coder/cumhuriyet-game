@@ -997,6 +997,22 @@ function conquerProvince(p){
   // Anlık yağma (tek seferlik)
   const loot = ind * 800_000 + Math.round(pop * 8);
   G.res.treasury += loot;
+  // Fethedilen ilin fabrikaları → üretim hattına ekle
+  if(ind >= 6){
+    // Büyük sanayi ili → askeri fabrika + üretim hatları
+    const models = ['Tüfek Üretim Hattı','Topçu Üretim Hattı','Mühimmat Hattı'];
+    const perDays = [80, 2, 180];
+    const count = Math.min(Math.floor(ind/4), models.length);
+    for(let i=0;i<count;i++){
+      G.industry.prodLines.push({id:'p'+Date.now()+i, model:models[i], factory:p.name+'-'+(i+1), progress:0, daysLeft:0, perDay:perDays[i], active:true});
+    }
+    G.industry.milFact += Math.floor(ind/6);
+  } else if(ind >= 3){
+    // Orta sanayi → tüfek hattı
+    G.industry.prodLines.push({id:'p'+Date.now(), model:'Tüfek Üretim Hattı', factory:p.name+'-1', progress:0, daysLeft:0, perDay:40, active:true});
+    G.industry.civFact += 1;
+  }
+
   // Onay ve meşruiyet
   G.approval = clamp(G.approval + 3, 0, 100);
   G.legitimacy = clamp(G.legitimacy + 2, 0, 100);
@@ -1128,14 +1144,53 @@ function gameTick(){
     return true;
   });
 
+  // Üretim hatları → stoka ekle (her gün)
+  G.industry.prodLines.forEach(p=>{
+    if(!p.active && p.active!==false) p.active=true;
+    if(p.active===false) return;
+    // Model adına göre donanım türü belirle
+    const model = (p.model||'').toLowerCase();
+    if(model.includes('tüfek')||model.includes('tufek')||model.includes('silah')){
+      G.equipment.rifles.stock += Math.round(p.perDay);
+      G.equipment.rifles.prodD = Math.round(p.perDay);
+    } else if(model.includes('tank')){
+      G.equipment.tanks.stock += Math.round(p.perDay);
+      G.equipment.tanks.prodD = Math.round(p.perDay);
+    } else if(model.includes('uçak')||model.includes('ucak')||model.includes('şahin')||model.includes('sahin')){
+      G.equipment.aircraft.stock += Math.round(p.perDay);
+      G.equipment.aircraft.prodD = Math.round(p.perDay);
+    } else if(model.includes('topçu')||model.includes('topcu')||model.includes('obüs')||model.includes('obus')||model.includes('bora')){
+      G.equipment.artillery.stock += Math.round(p.perDay);
+      G.equipment.artillery.prodD = Math.round(p.perDay);
+    } else if(model.includes('mühimmat')||model.includes('muhimmat')||model.includes('mermi')){
+      G.equipment.ammo.stock += Math.round(p.perDay);
+      G.equipment.ammo.prodD = Math.round(p.perDay);
+    } else {
+      // Genel askeri malzeme → tüfek ve mühimmat
+      G.equipment.rifles.stock += Math.round(p.perDay * 0.5);
+      G.equipment.ammo.stock += Math.round(p.perDay * 2);
+    }
+  });
+
   // Industry build queue
   G.industry.buildQueue.forEach(b=>{ b.daysLeft=Math.max(0,b.daysLeft-1); b.progress=Math.min(100,(b.total-b.daysLeft)/b.total*100); });
   G.industry.buildQueue = G.industry.buildQueue.filter(b=>{
     if(b.daysLeft<=0){
-      if(b.kind==='askeri') G.industry.milFact++;
-      else G.industry.civFact++;
-      G.res.treasuryD+=100000;
-      addEvent('SANAYİ','g',`${b.what} tamamlandı!`,`${b.loc}'da inşaat bitti. Üretim kapasitesi arttı.`);
+      if(b.kind==='askeri'){
+        G.industry.milFact++;
+        // Yeni askeri fabrika → otomatik tüfek üretim hattı başlat
+        const newLine={id:'p'+Date.now(),model:'Tüfek Üretim Hattı',factory:b.loc+'-'+G.industry.milFact,progress:0,daysLeft:0,perDay:60,active:true};
+        G.industry.prodLines.push(newLine);
+        G.equipment.rifles.demand+=300;
+        addEvent('SANAYİ','g',`${b.what} tamamlandı — Hat aktif!`,`${b.loc}'da fabrika bitti. Otomatik tüfek üretim hattı başlatıldı. +60 tüfek/gün`);
+      } else if(b.kind==='sivil'){
+        G.industry.civFact++;
+        G.res.treasuryD+=150_000;
+        addEvent('SANAYİ','g',`${b.what} tamamlandı!`,`${b.loc}'da sivil fabrika bitti. Günlük gelir +₺150K arttı.`);
+      } else {
+        if(b.kind==='enerji'){ G.industry.refineries++; G.res.oilD+=200; addEvent('SANAYİ','g',`${b.what} tamamlandı!`,`+200 petrol/gün.`); }
+        else { G.industry.powerPlants++; addEvent('SANAYİ','g',`${b.what} tamamlandı!`,'Enerji kapasitesi arttı.'); }
+      }
       return false;
     }
     return true;
@@ -1914,24 +1969,31 @@ function renderIndustry(header,tabs,body){
   renderSubTabs(tabs,[['prod','Üretim'],['build','İnşaat'],['stock','Stok']],'ind');
   let html='';
   if(st==='prod'||!G.activeSubTab.ind){
+    const totalMilProd = G.industry.prodLines.filter(p=>p.active!==false).reduce((s,p)=>s+p.perDay,0);
     html+=sectHTML('Fabrika Kapasitesi',''+
-      irowHTML('Askeri fabrika',G.industry.milFact)+
+      irowHTML('Askeri fabrika',`<span class="v">${G.industry.milFact} <span style="color:var(--green2);font-size:10px">+${totalMilProd.toFixed(0)} birim/gün</span></span>`)+
       irowHTML('Sivil fabrika',G.industry.civFact)+
       irowHTML('Rafineri',G.industry.refineries)+
-      irowHTML('Enerji santrali',G.industry.powerPlants)
+      irowHTML('Enerji santrali',G.industry.powerPlants)+
+      `<div class="btn-row">${btn('Yeni Hat Başlat',"startNewProdLine()",'sm',G.industry.milFact<1)}</div>`
     );
     html+=sectHTML('Aktif Üretim Hatları',
-      G.industry.prodLines.map(p=>`<div class="card">
-        <div class="card-title">${p.model}</div>
+      G.industry.prodLines.length ? G.industry.prodLines.map(p=>`<div class="card" style="${p.active===false?'opacity:.5':''}">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span class="card-title" style="margin-bottom:0">${p.model}</span>
+          ${p.active===false?pill('DURDURULDU','r'):pill('AKTİF','g')}
+        </div>
         ${irowHTML('Tesis',p.factory)}
-        ${irowHTML('Kalan',p.daysLeft+' gün')}
-        ${irowHTML('Günlük üretim',p.perDay+' adet/gün')}
-        ${pbarHTML(p.progress,'thin')}
+        ${irowHTML('Günlük üretim',`<span class="v pos">+${p.perDay} adet/gün → stoka ekleniyor</span>`)}
+        ${pbarHTML(Math.min(100,(p.progress||0)),'green thin')}
         <div class="btn-row">
-          ${btn('Önceliklendir',`prioritizeProd('${p.id}')`,'')}
-          ${btn('Durdur',`stopProd('${p.id}')`, 'ghost sm')}
+          ${p.active===false
+            ? btn('Yeniden Başlat',`resumeProd('${p.id}')`, 'green sm')
+            : btn('Durdur',`pauseProd('${p.id}')`, 'ghost sm')}
+          ${btn('Sil',`stopProd('${p.id}')`, 'red sm')}
         </div>
       </div>`).join('')
+      : '<div style="padding:8px;font-size:11px;color:var(--inkdim)">Aktif üretim hattı yok. Askeri fabrika kurun.</div>'
     );
   } else if(st==='build'){
     html+=sectHTML('İnşaat Sırası',
@@ -1949,10 +2011,10 @@ function renderIndustry(header,tabs,body){
     );
     html+=sectHTML('Yeni İnşaat',
       [
-        {n:'Askeri Fabrika',k:'askeri',cost:8_500_000,days:140,effect:'+2 üretim/gün'},
-        {n:'Sivil Fabrika',k:'sivil',cost:6_200_000,days:90,effect:'+₺100K/gün gelir'},
-        {n:'Rafineri',k:'enerji',cost:14_000_000,days:200,effect:'+200 petrol/gün'},
-        {n:'Hava Üssü',k:'askeri',cost:18_400_000,days:220,effect:'Hava birliği kapasitesi'},
+        {n:'Askeri Fabrika',k:'askeri',cost:8_500_000,days:40,effect:'+60 tüfek/gün, hat otomatik başlar'},
+        {n:'Sivil Fabrika',k:'sivil',cost:6_200_000,days:25,effect:'+₺150K/gün gelir'},
+        {n:'Rafineri',k:'enerji',cost:14_000_000,days:55,effect:'+200 petrol/gün'},
+        {n:'Hava Üssü',k:'askeri',cost:18_400_000,days:60,effect:'Hava birliği kapasitesi'},
       ].map((x,i)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;${i?'border-top:1px solid var(--line)':''}">
         <div>
           <div style="font-family:Cinzel,serif;font-size:12px;color:var(--ink);font-weight:600">${x.n}</div>
@@ -1972,9 +2034,25 @@ function renderIndustry(header,tabs,body){
       </div>`).join(''));
   } else {
     const eq=G.equipment;
-    const rows=[['Tüfek','rifles'],['Topçu','artillery'],['Tank','tanks'],['Uçak','aircraft'],['Mühimmat','ammo']];
-    html+=sectHTML('Donanım Stoku',`<table class="t"><thead><tr><th>Donanım</th><th>Stok</th><th>İhtiyaç</th><th>Üretim</th></tr></thead><tbody>
-      ${rows.map(([n,k])=>`<tr><td>${n}</td><td>${fmtNum(eq[k].stock)}</td><td>${fmtNum(eq[k].demand)}</td><td style="color:${eq[k].prodD>0?'var(--green2)':'var(--inkdim)'}">+${eq[k].prodD}/g</td></tr>`).join('')}
+    const rows=[['🔫 Tüfek','rifles'],['💥 Topçu','artillery'],['🛡 Tank','tanks'],['✈ Uçak','aircraft'],['📦 Mühimmat','ammo']];
+    // Güncel prodD hesapla üretim hatlarından
+    const prodMap={rifles:0,artillery:0,tanks:0,aircraft:0,ammo:0};
+    G.industry.prodLines.filter(p=>p.active!==false).forEach(p=>{
+      const m=(p.model||'').toLowerCase();
+      if(m.includes('tüfek')||m.includes('tufek')||m.includes('silah')) prodMap.rifles+=p.perDay;
+      else if(m.includes('tank')) prodMap.tanks+=p.perDay;
+      else if(m.includes('uçak')||m.includes('ucak')||m.includes('şahin')) prodMap.aircraft+=p.perDay;
+      else if(m.includes('topçu')||m.includes('topcu')||m.includes('obüs')||m.includes('bora')) prodMap.artillery+=p.perDay;
+      else if(m.includes('mühimmat')||m.includes('muhimmat')||m.includes('mermi')) prodMap.ammo+=p.perDay;
+      else { prodMap.rifles+=Math.round(p.perDay*0.5); prodMap.ammo+=Math.round(p.perDay*2); }
+    });
+    html+=sectHTML('Donanım Stoku',`<table class="t"><thead><tr><th>Donanım</th><th>Stok</th><th>İhtiyaç</th><th>Üretim/Gün</th><th>Durum</th></tr></thead><tbody>
+      ${rows.map(([n,k])=>{
+        const daily=Math.round(prodMap[k]||0);
+        const ratio=eq[k].stock/eq[k].demand;
+        const status=ratio>=1?'<span style="color:var(--green2)">Yeterli</span>':ratio>=0.6?'<span style="color:var(--gold2)">Az</span>':'<span style="color:var(--red2)">Kritik</span>';
+        return `<tr><td>${n}</td><td style="font-weight:700">${fmtNum(eq[k].stock)}</td><td style="color:var(--inkdim)">${fmtNum(eq[k].demand)}</td><td style="color:${daily>0?'var(--green2)':'var(--inkdim)'}">${daily>0?'+'+daily:'-'}/gün</td><td>${status}</td></tr>`;
+      }).join('')}
     </tbody></table>`);
   }
   body.innerHTML=html;
@@ -1990,7 +2068,48 @@ function prioritizeProd(id){
 }
 function stopProd(id){
   G.industry.prodLines=G.industry.prodLines.filter(x=>x.id!==id);
-  showToast('SANAYİ','Üretim durduruldu','Hat devre dışı bırakıldı.');
+  showToast('SANAYİ','Üretim hattı silindi','Hat devre dışı bırakıldı.');
+  renderPanel();
+}
+function pauseProd(id){
+  const p=G.industry.prodLines.find(x=>x.id===id);
+  if(p){ p.active=false; showToast('SANAYİ',p.model+' durduruldu','Üretim askıya alındı.'); renderPanel(); }
+}
+function resumeProd(id){
+  const p=G.industry.prodLines.find(x=>x.id===id);
+  if(p){ p.active=true; showToast('SANAYİ',p.model+' yeniden başlatıldı','Üretim devam ediyor.'); renderPanel(); }
+}
+function startNewProdLine(){
+  const opts=[
+    {model:'Tüfek Üretim Hattı',perDay:60,key:'rifles'},
+    {model:'Topçu Üretim Hattı',perDay:3,key:'artillery'},
+    {model:'Tank Üretim Hattı',perDay:1,key:'tanks'},
+    {model:'Uçak Üretim Hattı',perDay:0.5,key:'aircraft'},
+    {model:'Mühimmat Hattı',perDay:250,key:'ammo'},
+  ];
+  // Mevcut hat sayısına göre fabrika kapasitesi kontrolü
+  const activeLines=G.industry.prodLines.filter(p=>p.active!==false).length;
+  if(activeLines>=G.industry.milFact*2){
+    showToast('SANAYİ','Fabrika kapasitesi dolu',`${G.industry.milFact} askeri fabrikanız var. En fazla ${G.industry.milFact*2} hat çalışabilir.`);
+    return;
+  }
+  document.getElementById('modal-content').innerHTML=`
+    <div class="mc tl"></div><div class="mc tr"></div><div class="mc bl"></div><div class="mc br"></div>
+    <div class="modal-tag">🏭 YENİ ÜRETİM HATTI</div>
+    <div class="modal-title">Hangi silahı üretelim?</div>
+    <div class="modal-body" style="margin-bottom:8px">Askeri fabrika: ${G.industry.milFact} adet • Aktif hat: ${activeLines}</div>
+    <div class="modal-actions" style="display:block">
+      ${opts.map(o=>`<button class="btn sm" style="width:100%;margin:4px 0;justify-content:space-between" onclick="closeModal();addProdLine('${o.model}',${o.perDay})">
+        <span>${o.model}</span>
+        <span style="font-family:IBM Plex Mono;font-size:10px">+${o.perDay}/gün → stok</span>
+      </button>`).join('')}
+      <button class="btn ghost" onclick="closeModal()" style="width:100%;margin-top:8px">Vazgeç</button>
+    </div>`;
+  document.getElementById('modal').style.display='flex';
+}
+function addProdLine(model,perDay){
+  G.industry.prodLines.push({id:'p'+Date.now(),model,factory:'Fabrika-'+G.industry.milFact,progress:0,daysLeft:0,perDay,active:true});
+  showToast('SANAYİ',model+' başlatıldı',`Günde +${perDay} adet stoğa eklenecek.`);
   renderPanel();
 }
 function startBuild(name,kind,cost,days){
