@@ -272,20 +272,45 @@ table.t tr:hover td{background:rgba(196,149,74,.04);color:var(--ink)}
 .sg-pct{width:28px;text-align:right;font-family:'IBM Plex Mono';font-size:10px;color:var(--ink2)}
 .sg-orient{font-size:9px;font-family:'Bebas Neue';letter-spacing:.1em;color:var(--inkdim);flex:0 0 80px;text-align:right}
 
+/* ── ANİMASYONLU TOPBAR GRAFİK ── */
+@keyframes chartDraw{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
+@keyframes dotPulse{0%,100%{opacity:.5}50%{opacity:1}}
+.tb-chart-wrap{width:155px;border-right:1px solid var(--line);height:100%;display:flex;flex-direction:column;align-items:stretch;justify-content:center;padding:4px 10px;flex-shrink:0}
+.tb-chart-wrap svg{display:block;width:100%}
+.tb-chart-labels{display:flex;justify-content:space-between;margin-top:1px}
+.tb-chart-lbl{font-size:7px;color:var(--inkdim);font-family:'Bebas Neue';letter-spacing:.08em}
+.tb-chart-val{font-size:7px;font-family:'IBM Plex Mono';color:var(--gold2)}
+.chart-live-line{stroke-dasharray:600;animation:chartDraw .8s ease forwards}
+.chart-live-dot{animation:dotPulse 2s ease infinite}
+.ts-spark{display:block;margin-top:1px}
+
 /* ── YENİ: SPARKLINE GRAFİK ── */
 .chart-wrap{background:rgba(0,0,0,.3);border:1px solid var(--line);padding:8px 10px;margin-top:6px}
 .chart-wrap svg{display:block;width:100%}
 .chart-title{font-size:9px;color:var(--inkdim);font-family:'Bebas Neue';letter-spacing:.14em;margin-bottom:5px;display:flex;justify-content:space-between}
 
+/* ── ANİMASYONLU TOPBAR GRAFİK ── */
+@keyframes chartDraw{from{stroke-dashoffset:600}to{stroke-dashoffset:0}}
+@keyframes dotPulse{0%,100%{opacity:.5}50%{opacity:1}}
+.tb-chart-wrap{width:155px;border-right:1px solid var(--line);height:100%;display:flex;flex-direction:column;align-items:stretch;justify-content:center;padding:4px 10px;flex-shrink:0}
+.tb-chart-wrap svg{display:block;width:100%}
+.tb-chart-labels{display:flex;justify-content:space-between;margin-top:1px}
+.tb-chart-lbl{font-size:7px;color:var(--inkdim);font-family:'Bebas Neue';letter-spacing:.08em}
+.tb-chart-val{font-size:7px;font-family:'IBM Plex Mono';color:var(--gold2)}
+.chart-live-line{stroke-dasharray:600;animation:chartDraw .8s ease forwards}
+.chart-live-dot{animation:dotPulse 2s ease infinite}
+.ts-spark{display:block;margin-top:1px}
+
 /* ── YENİ: MECLİS ── */
 .parl-bar{display:flex;height:14px;border:1px solid var(--line);overflow:hidden;margin:6px 0}
 .parl-coalition{background:#c43a3f;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:9px;letter-spacing:.1em;color:#fff;transition:flex .5s}
 .parl-oppos{background:#3a6a9a;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue';font-size:9px;letter-spacing:.1em;color:#fff;transition:flex .5s}
-.bill-card{background:var(--bg2);border:1px solid var(--line);padding:10px 12px;margin-bottom:6px;transition:border-color .15s}
-.bill-card:hover{border-color:var(--golddim)}
+.bill-card{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--golddim);padding:10px 12px;margin-bottom:8px;transition:border-color .15s}
+.bill-card:hover{border-left-color:var(--gold2)}
 .bill-tag{font-family:'Bebas Neue';font-size:9px;letter-spacing:.16em;color:var(--gold2);margin-bottom:2px}
-.bill-name{font-family:'Cinzel';font-size:12px;color:var(--ink);font-weight:600;margin-bottom:4px}
-.bill-effect{font-size:10px;color:var(--inkdim);line-height:1.4;margin-bottom:6px}
+.bill-name{font-family:'Cinzel';font-size:13px;color:var(--ink);font-weight:600;margin-bottom:4px}
+.bill-effect{font-size:10px;color:var(--green2);line-height:1.5;margin-bottom:4px;padding:5px 8px;background:rgba(0,0,0,.2);border-left:2px solid var(--green2)}
+.bill-desc{font-size:10px;color:var(--ink2);margin-bottom:6px;line-height:1.4}
 
 /* ── YENİ: KOMUTAN KARTLARI ── */
 .gen-card{background:var(--bg2);border:1px solid var(--line);padding:10px 12px;margin-bottom:6px;transition:border-color .15s}
@@ -424,6 +449,13 @@ table.t tr:hover td{background:rgba(196,149,74,.04);color:var(--ink)}
     </div>
   </div>
   <div class="topstats" id="topstats"><!-- filled by JS --></div>
+  <div class="tb-chart-wrap" title="Hazine trendi — son 30 gün">
+    <svg id="tb-chart-svg" viewBox="0 0 140 36" height="36" preserveAspectRatio="none"></svg>
+    <div class="tb-chart-labels">
+      <span class="tb-chart-lbl">Hazine Trendi</span>
+      <span class="tb-chart-val" id="tb-chart-lastval"></span>
+    </div>
+  </div>
   <div class="datebox">
     <div class="d" id="tb-date">8 Mayıs 2026</div>
     <div class="s" id="tb-speed">Hız: 1x</div>
@@ -601,7 +633,12 @@ function makeInitialState(presidentName){
     history: {
       treasury: [128,132,135,138,140,142],
       approval:  [71, 70, 69, 68, 68, 68],
+      manpower:  [],
+      oil:       [],
+      steel:     [],
+      food:      [],
     },
+    prodAcc: {rifles:0, tanks:0, aircraft:0, artillery:0, ammo:0},
 
     ownedProvs: ['ank','kir','kse'],
     claimedProvs: ['kon','nev','cor','yoz','aks','krm','nig'],
@@ -673,9 +710,9 @@ function makeInitialState(presidentName){
       ],
       prodLines:[
         {id:'p1',model:'TZ-7 Tüfeği',factory:'Kırıkkale-1',progress:78,daysLeft:2,perDay:60},
-        {id:'p2',model:'Boran TR-3 Tank',factory:'Sakarya-2',progress:32,daysLeft:14,perDay:0.4},
-        {id:'p3',model:'Şahin F-12 Uçak',factory:'Mürted-1',progress:18,daysLeft:22,perDay:0.2},
-        {id:'p4',model:'Bora 155mm Obüs',factory:'Kayseri-1',progress:64,daysLeft:5,perDay:1.4},
+        {id:'p2',model:'Boran TR-3 Tank',factory:'Sakarya-2',progress:32,daysLeft:14,perDay:2},
+        {id:'p3',model:'Şahin F-12 Uçak',factory:'Mürted-1',progress:18,daysLeft:22,perDay:1},
+        {id:'p4',model:'Bora 155mm Obüs',factory:'Kayseri-1',progress:64,daysLeft:5,perDay:2},
         {id:'p5',model:'Mühimmat',factory:'Ankara-3',progress:88,daysLeft:1,perDay:220},
       ],
     },
@@ -1144,32 +1181,42 @@ function gameTick(){
     return true;
   });
 
-  // Üretim hatları → stoka ekle (her gün)
+  // Üretim hatları → stoka ekle (her gün) — kesirli birikimli
+  if(!G.prodAcc) G.prodAcc={rifles:0,tanks:0,aircraft:0,artillery:0,ammo:0};
   G.industry.prodLines.forEach(p=>{
     if(!p.active && p.active!==false) p.active=true;
     if(p.active===false) return;
-    // Model adına göre donanım türü belirle
     const model = (p.model||'').toLowerCase();
+    const acc=G.prodAcc;
     if(model.includes('tüfek')||model.includes('tufek')||model.includes('silah')){
-      G.equipment.rifles.stock += Math.round(p.perDay);
-      G.equipment.rifles.prodD = Math.round(p.perDay);
+      acc.rifles+=p.perDay; const add=Math.floor(acc.rifles); acc.rifles-=add;
+      G.equipment.rifles.stock+=add; G.equipment.rifles.prodD=(G.equipment.rifles.prodD||0)+p.perDay;
     } else if(model.includes('tank')){
-      G.equipment.tanks.stock += Math.round(p.perDay);
-      G.equipment.tanks.prodD = Math.round(p.perDay);
+      acc.tanks+=p.perDay; const add=Math.floor(acc.tanks); acc.tanks-=add;
+      G.equipment.tanks.stock+=add; G.equipment.tanks.prodD=(G.equipment.tanks.prodD||0)+p.perDay;
     } else if(model.includes('uçak')||model.includes('ucak')||model.includes('şahin')||model.includes('sahin')){
-      G.equipment.aircraft.stock += Math.round(p.perDay);
-      G.equipment.aircraft.prodD = Math.round(p.perDay);
+      acc.aircraft+=p.perDay; const add=Math.floor(acc.aircraft); acc.aircraft-=add;
+      G.equipment.aircraft.stock+=add; G.equipment.aircraft.prodD=(G.equipment.aircraft.prodD||0)+p.perDay;
     } else if(model.includes('topçu')||model.includes('topcu')||model.includes('obüs')||model.includes('obus')||model.includes('bora')){
-      G.equipment.artillery.stock += Math.round(p.perDay);
-      G.equipment.artillery.prodD = Math.round(p.perDay);
+      acc.artillery+=p.perDay; const add=Math.floor(acc.artillery); acc.artillery-=add;
+      G.equipment.artillery.stock+=add; G.equipment.artillery.prodD=(G.equipment.artillery.prodD||0)+p.perDay;
     } else if(model.includes('mühimmat')||model.includes('muhimmat')||model.includes('mermi')){
-      G.equipment.ammo.stock += Math.round(p.perDay);
-      G.equipment.ammo.prodD = Math.round(p.perDay);
+      acc.ammo+=p.perDay; const add=Math.floor(acc.ammo); acc.ammo-=add;
+      G.equipment.ammo.stock+=add; G.equipment.ammo.prodD=(G.equipment.ammo.prodD||0)+p.perDay;
     } else {
-      // Genel askeri malzeme → tüfek ve mühimmat
-      G.equipment.rifles.stock += Math.round(p.perDay * 0.5);
-      G.equipment.ammo.stock += Math.round(p.perDay * 2);
+      acc.rifles+=p.perDay*0.5; const ra=Math.floor(acc.rifles); acc.rifles-=ra; G.equipment.rifles.stock+=ra;
+      acc.ammo+=p.perDay*2; const aa=Math.floor(acc.ammo); acc.ammo-=aa; G.equipment.ammo.stock+=aa;
     }
+  });
+  // prodD sıfırla (her tick yeniden hesaplansın)
+  Object.values(G.equipment).forEach(e=>{ if(e.prodD!==undefined) e.prodD=0; });
+  G.industry.prodLines.filter(p=>p.active!==false).forEach(p=>{
+    const m=(p.model||'').toLowerCase();
+    if(m.includes('tüfek')||m.includes('tufek')||m.includes('silah')) G.equipment.rifles.prodD=(G.equipment.rifles.prodD||0)+p.perDay;
+    else if(m.includes('tank')) G.equipment.tanks.prodD=(G.equipment.tanks.prodD||0)+p.perDay;
+    else if(m.includes('uçak')||m.includes('ucak')||m.includes('şahin')) G.equipment.aircraft.prodD=(G.equipment.aircraft.prodD||0)+p.perDay;
+    else if(m.includes('topçu')||m.includes('topcu')||m.includes('obüs')||m.includes('bora')) G.equipment.artillery.prodD=(G.equipment.artillery.prodD||0)+p.perDay;
+    else if(m.includes('mühimmat')||m.includes('muhimmat')||m.includes('mermi')) G.equipment.ammo.prodD=(G.equipment.ammo.prodD||0)+p.perDay;
   });
 
   // Industry build queue
@@ -1210,10 +1257,22 @@ function gameTick(){
   else if(G.legitimacy > G.approval + 15) G.legitimacy = Math.max(0, G.legitimacy - 0.05);
 
   // Geçmiş kayıt
+  if(!G.history.manpower) G.history.manpower=[];
+  if(!G.history.oil) G.history.oil=[];
+  if(!G.history.steel) G.history.steel=[];
+  if(!G.history.food) G.history.food=[];
   G.history.treasury.push(Math.round(G.res.treasury/1e6));
   G.history.approval.push(G.approval);
+  G.history.manpower.push(Math.round(G.res.manpower/1000));
+  G.history.oil.push(Math.round(G.res.oil));
+  G.history.steel.push(Math.round(G.res.steel));
+  G.history.food.push(Math.round(G.res.food));
   if(G.history.treasury.length>30) G.history.treasury.shift();
   if(G.history.approval.length>30) G.history.approval.shift();
+  if(G.history.manpower.length>30) G.history.manpower.shift();
+  if(G.history.oil.length>30) G.history.oil.shift();
+  if(G.history.steel.length>30) G.history.steel.shift();
+  if(G.history.food.length>30) G.history.food.shift();
 
   // Onay düşükse sosyal dengesizlik
   if(G.approval < 30 && Math.random()<0.05){
@@ -1379,14 +1438,51 @@ function renderTopBar(){
     {icon:'<path d="M12 21C5 16 2 12 2 8C2 5 4 3 7 3C9 3 11 4 12 6C13 4 15 3 17 3C20 3 22 5 22 8C22 12 19 16 12 21Z"/>',val:G.happiness+'%',d:null,lbl:'Mutluluk'},
     {icon:'<path d="M12 2L4 6V12C4 17 7 20 12 22C17 20 20 17 20 12V6Z"/><path d="M9 12L11 14L15 10" stroke-linecap="round" stroke-linejoin="round"/>',val:G.stability+'%',d:null,lbl:'İstikrar'},
   ];
-  document.getElementById('topstats').innerHTML=stats.map(s=>`
+  // Mini sparkline helper
+  function miniSpark(data, color='#c4954a'){
+    if(!data||data.length<2) return '';
+    const mn=Math.min(...data), mx=Math.max(...data), range=mx-mn||1;
+    const w=50, h=10;
+    const pts=data.map((v,i)=>`${Math.round(i/(data.length-1)*(w-2)+1)},${Math.round((1-(v-mn)/range)*(h-3)+1.5)}`).join(' ');
+    return `<svg class="ts-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.2" stroke-linejoin="round" opacity=".75"/></svg>`;
+  }
+
+  const histMap=[null, G.history.manpower, G.history.oil, G.history.steel, G.history.food, null, null];
+  document.getElementById('topstats').innerHTML=stats.map((s,i)=>`
     <div class="ts">
       <svg class="ts-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4">${s.icon}</svg>
       <div class="ts-data">
         <div class="ts-val">${s.val}${s.d!=null?`<span class="ts-d ${s.d>=0?'pos':'neg'}">${fmtD(s.d)}</span>`:''}</div>
         <div class="ts-lbl">${s.lbl}</div>
+        ${histMap[i]&&histMap[i].length>=2?miniSpark(histMap[i],'#c4954a'):''}
       </div>
     </div>`).join('');
+
+  // Animated topbar treasury chart
+  const chartEl=document.getElementById('tb-chart-svg');
+  const chartLastVal=document.getElementById('tb-chart-lastval');
+  if(chartEl && G.history.treasury.length>=2){
+    const data=G.history.treasury;
+    const w=140, h=36;
+    const mn=Math.min(...data), mx=Math.max(...data), range=mx-mn||1;
+    const pts=data.map((v,i)=>`${(i/(data.length-1)*(w-4)+2).toFixed(1)},${((1-(v-mn)/range)*(h-6)+3).toFixed(1)}`).join(' ');
+    const lx=parseFloat(pts.split(' ').pop().split(',')[0]);
+    const ly=parseFloat(pts.split(' ').pop().split(',')[1]);
+    const trend=data[data.length-1]>=data[data.length-2];
+    const lineColor=trend?'#7ab84a':'#e85055';
+    chartEl.innerHTML=`
+      <defs>
+        <linearGradient id="tbg" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="rgba(196,149,74,.3)"/>
+          <stop offset="100%" stop-color="${lineColor}"/>
+        </linearGradient>
+        <filter id="glow"><feGaussianBlur stdDeviation="1" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <polyline points="${pts}" fill="none" stroke="url(#tbg)" stroke-width="1.5" stroke-linejoin="round" class="chart-live-line"/>
+      <circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="2.5" fill="${lineColor}" class="chart-live-dot" filter="url(#glow)"/>
+    `;
+    if(chartLastVal) chartLastVal.textContent=fmtMoney(G.res.treasury);
+  }
 }
 
 function pbarHTML(pct,cls='',lbl=''){
@@ -2452,14 +2548,17 @@ function renderInterior(header,tabs,body){
       slHTML('İstihdam',i.employment+'%',i.employment,'green')
     )}
     ${sectHTML('Yasalar & Politikalar',
-      i.laws.map((l,idx)=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;${idx?'border-top:1px solid var(--line)':''}">
-        <div>
+      i.laws.map((l,idx)=>`<div style="background:var(--bg2);border:1px solid var(--line);border-left:3px solid ${l.active?'var(--green2)':'var(--golddim)'};padding:8px 12px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
           <div style="font-family:Cinzel,serif;font-size:12px;color:var(--ink);font-weight:600">${l.name}</div>
-          <div style="font-size:10px;color:var(--inkdim);margin-top:2px">${l.effect}</div>
+          ${pill(l.active?'✓ Aktif':'Pasif',l.active?'g':'')}
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          ${pill(l.active?'Aktif':'Pasif',l.active?'g':'')}
-          ${btn(l.active?'Devre Dışı':'Etkinleştir',`toggleLaw(${idx})`,l.active?'ghost sm':'sm')}
+        <div style="font-size:10px;color:${l.active?'var(--green2)':'var(--inkdim)'};margin-bottom:8px;padding:4px 8px;background:rgba(0,0,0,.2)">${l.effect}</div>
+        <div class="btn-row">
+          ${l.active
+            ? `<button class="btn red sm" onclick="toggleLaw(${idx})">✗ Askıya Al / Reddet</button>`
+            : `<button class="btn green sm" onclick="toggleLaw(${idx})">✓ Onayla / Etkinleştir</button>`
+          }
         </div>
       </div>`).join('')
     )}
@@ -2549,18 +2648,32 @@ function renderParliament(header,tabs,body){
         </div>`;
       }).join('')}
     `)}
-    ${sectHTML('Mecliste Bekleyen Yasalar',
-      G.parliament.bills.filter(b=>b.status==='beklemede').map(b=>`
-        <div class="bill-card">
-          <div class="bill-tag">${b.tag}</div>
-          <div class="bill-name">${b.name}</div>
-          <div class="bill-effect">${b.effect}</div>
-          ${irowHTML('Gerekli Sermaye',`<span style="color:var(--purple2);font-family:'IBM Plex Mono'">${b.cost} PC</span>`)}
-          <div class="btn-row">
-            ${btn('Yasayı Geç',`passBill('${b.id}')`,pc<b.cost||G.parliament.coalition<61?'purple':'purple',pc<b.cost||G.parliament.coalition<61)}
-            ${btn('Reddet',`rejectBill('${b.id}')`, 'ghost sm')}
+    ${sectHTML('Mecliste Bekleyen Yasalar — İncele & Oyla',
+      G.parliament.bills.filter(b=>b.status==='beklemede').map(b=>{
+        const canPass=pc>=b.cost&&G.parliament.coalition>=61;
+        const pcColor=pc>=b.cost?'var(--green2)':'var(--red2)';
+        const coalColor=G.parliament.coalition>=61?'var(--green2)':'var(--red2)';
+        return `<div class="bill-card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+            <div>
+              <div class="bill-tag">${b.tag}</div>
+              <div class="bill-name">${b.name}</div>
+            </div>
+            <span style="font-family:'IBM Plex Mono';font-size:11px;color:var(--purple2);background:rgba(80,40,120,.2);padding:2px 6px;border:1px solid rgba(154,106,202,.3)">${b.cost} PC</span>
           </div>
-        </div>`).join('')||'<div style="padding:8px;font-size:11px;color:var(--inkdim)">Bekleyen yasa yok.</div>'
+          <div class="bill-effect">✓ ${b.effect}</div>
+          <div style="display:flex;gap:8px;margin-bottom:6px;font-size:9px">
+            <span style="color:${pcColor}">Sermaye: ${pc}/${b.cost} PC</span>
+            <span style="color:var(--inkdim)">|</span>
+            <span style="color:${coalColor}">Koalisyon: ${G.parliament.coalition}/61</span>
+          </div>
+          <div class="btn-row">
+            <button class="btn green" ${canPass?'':'disabled'} onclick="passBill('${b.id}')">✓ Kabul Et — Oyla</button>
+            <button class="btn ghost sm" onclick="reviewBill('${b.id}')">📋 İncele</button>
+            <button class="btn red sm" onclick="rejectBill('${b.id}')">✗ Reddet</button>
+          </div>
+        </div>`;
+      }).join('')||'<div style="padding:8px;font-size:11px;color:var(--inkdim)">Bekleyen yasa yok.</div>'
     )}
     ${G.parliament.bills.filter(b=>b.status==='geçti').length?sectHTML('Geçen Yasalar',
       G.parliament.bills.filter(b=>b.status==='geçti').map(b=>`
@@ -2586,6 +2699,37 @@ function passBill(id){
   if(b.pcEffect==='security'){ G.stability=clamp(G.stability+6,0,100); G.happiness=clamp(G.happiness-2,0,100); }
   addEvent('MECLİS','g',b.name+' yasası geçti',`${b.effect}. Etki hemen devreye girdi.`);
   renderAll();
+}
+
+function reviewBill(id){
+  const b=G.parliament.bills.find(x=>x.id===id);
+  if(!b) return;
+  const descs={
+    b1:{desc:'Yerli savunma sanayisini destekleyen bu yasa, askeri fabrikaların kapasitesini artırmak için devlet teşviki sağlar.',pros:['Askeri fabrika kapasitesi +3','Yerli üretim oranı artar','Savunma bütçesi verimliliği yükselir'],cons:['Yüksek siyasi sermaye gerektirir','Sivil fabrikaları ihmal edebilir']},
+    b2:{desc:'İthalat vergilerini düşürerek dış ticaret hacmini büyütmeyi amaçlayan reform paketi.',pros:['Ticaret geliri +₺300K/gün','Yabancı yatırım artar','Enflasyon düşer'],cons:['Yerli üreticiler etkilenebilir','Ticaret açığı genişleyebilir']},
+    b3:{desc:'İlköğretimden üniversiteye tüm eğitim kademelerini yeniden düzenleyen kapsamlı reform.',pros:['Okur-yazarlık +5','Araştırma puanı +3/ay','Uzun vadeli büyüme'],cons:['Bütçe yükü','Kısa vadede etkisi sınırlı']},
+    b4:{desc:'Çiftçilere doğrudan sübvansiyon ve gübre desteği sağlayan tarım paketi.',pros:['Gıda üretimi +200t/gün','Kırsal bölge memnuniyeti artar'],cons:['Hazine yükü','Kentsel bütçeden çekilir']},
+  };
+  const info=descs[id]||{desc:b.effect,pros:[],cons:[]};
+  document.getElementById('modal-content').innerHTML=`
+    <div class="modal-title" style="color:var(--gold2)">${b.name}</div>
+    <div style="font-size:9px;color:var(--inkdim);font-family:'Bebas Neue';letter-spacing:.14em;margin-bottom:8px">${b.tag} YASASI</div>
+    <div class="modal-body" style="margin-bottom:0">
+      <div style="font-size:11px;line-height:1.5;color:var(--ink2);margin-bottom:10px">${info.desc}</div>
+      <div style="font-size:10px;color:var(--green2);margin-bottom:4px"><b>Etki & Kazanımlar:</b></div>
+      ${info.pros.map(p=>`<div style="font-size:10px;color:var(--green2);margin-bottom:2px">✓ ${p}</div>`).join('')}
+      ${info.cons.length?`<div style="font-size:10px;color:var(--red2);margin:6px 0 4px"><b>Riskler:</b></div>${info.cons.map(c=>`<div style="font-size:10px;color:var(--red2);margin-bottom:2px">✗ ${c}</div>`).join('')}`:''}
+      <div style="margin-top:10px;padding:6px 8px;background:rgba(0,0,0,.2);border:1px solid var(--line);font-size:10px">
+        Gerekli siyasi sermaye: <b style="color:var(--purple2)">${b.cost} PC</b> &nbsp;|&nbsp; Mevcut: <b style="color:${G.politicalCapital>=b.cost?'var(--green2)':'var(--red2)'}">${Math.round(G.politicalCapital)} PC</b>
+      </div>
+    </div>
+    <div class="modal-actions" style="margin-top:14px">
+      <button class="btn green" ${G.politicalCapital>=b.cost&&G.parliament.coalition>=61?'':'disabled'} onclick="closeModal();passBill('${id}')">✓ Kabul Et — Oyla</button>
+      <button class="btn red" onclick="closeModal();rejectBill('${id}')">✗ Reddet</button>
+      <button class="btn ghost" onclick="closeModal()">Kapat</button>
+    </div>
+  `;
+  document.getElementById('modal').style.display='flex';
 }
 
 function rejectBill(id){
@@ -3142,6 +3286,12 @@ function tryLoadSave(){
     if(!data.wars) data.wars=[];
     if(!data.navy) data.navy={frigates:2,destroyers:1,submarines:0,battleships:0,building:[]};
     if(!data.navy.building) data.navy.building=[];
+    if(!data.prodAcc) data.prodAcc={rifles:0,tanks:0,aircraft:0,artillery:0,ammo:0};
+    if(!data.history) data.history={treasury:[],approval:[],manpower:[],oil:[],steel:[],food:[]};
+    if(!data.history.manpower) data.history.manpower=[];
+    if(!data.history.oil) data.history.oil=[];
+    if(!data.history.steel) data.history.steel=[];
+    if(!data.history.food) data.history.food=[];
     data.wars.forEach(w=>{ if(!w.attackCooldowns) w.attackCooldowns={}; if(!w.casualties) w.casualties={us:0,them:0}; });
     return data;
   } catch(err){ return null; }
